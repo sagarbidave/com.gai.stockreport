@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="GST Tax" printOrder="Horizontal" pageWidth="800" pageHeight="550" orientation="Landscape" columnWidth="800" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="13099253-1ed1-4b1f-9f13-a01b77c13f51">
+	<property name="ireport.scriptlethandling" value="0"/>
+	<property name="ireport.encoding" value="UTF-8"/>
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="net.sf.jasperreports.export.xls.detect.cell.type" value="true"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.util.*"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<style name="default" vAlign="Middle" fontName="Bitstream Vera Sans" fontSize="8"/>
+	<style name="Report_Title" fontName="Bitstream Vera Sans" fontSize="18"/>
+	<style name="Report_Subtitle" forecolor="#555555" fontName="Bitstream Vera Sans" fontSize="14"/>
+	<style name="Report_Data_Label" fontName="Bitstream Vera Sans" fontSize="11" isBold="true"/>
+	<style name="Report_Data_Field" fontName="Bitstream Vera Sans" fontSize="11" isBold="false"/>
+	<style name="Total_Field" mode="Opaque" forecolor="#000000" backcolor="#CCCCCC" vAlign="Middle" fontName="Bitstream Vera Sans" fontSize="11" isBold="true"/>
+	<style name="GroupHeader_DarkGray" mode="Opaque" forecolor="#FFFFFF" backcolor="#555555" vAlign="Middle" fontName="Bitstream Vera Sans" fontSize="12" isBold="true"/>
+	<style name="Group_Data_Label" fontName="Bitstream Vera Sans" fontSize="11" isBold="true"/>
+	<style name="Group_Data_Field" fontName="Bitstream Vera Sans" fontSize="11"/>
+	<style name="Detail_Header" mode="Opaque" forecolor="#FFFFFF" backcolor="#5D5D5D" vAlign="Middle" fontName="Bitstream Vera Sans" fontSize="10" isBold="true"/>
+	<style name="Detail_Line" fontName="Bitstream Vera Sans" fontSize="8">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[new Boolean($V{REPORT_COUNT}.intValue()%2==1)]]></conditionExpression>
+			<style mode="Opaque" backcolor="#CCCCCC"/>
+		</conditionalStyle>
+	</style>
+	<style name="Total_Gray" mode="Opaque" forecolor="#000000" backcolor="#CCCCCC"/>
+	<style name="Detail_Data_Label" mode="Opaque" backcolor="#CCCCCC" fontName="Bitstream Vera Sans" fontSize="10" isBold="true"/>
+	<style name="Detail_Data_Field" mode="Opaque" backcolor="#CCCCCC" fontName="Bitstream Vera Sans" fontSize="10"/>
+	<style name="Group_Footer" fontName="Bitstream Vera Sans" fontSize="11" isBold="true"/>
+	<style name="Report_Footer" isDefault="true" vAlign="Middle" fontName="Bitstream Vera Sans" fontSize="11"/>
+	<parameter name="DOCUMENT_ID" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="NUMBERFORMAT" class="java.text.DecimalFormat" isForPrompting="false"/>
+	<parameter name="LOCALE" class="java.util.Locale" isForPrompting="false"/>
+	<parameter name="BASE_DESIGN" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{BASE_DESIGN}+"/com/sakasham/rwsales/erpReports/"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[select pm.name as paymentmethod,
+co.EM_Gsq_Dochandtype as delivery,
+em_gsr_Warranty,
+em_gsr_Installation,
+em_gsr_TrainingSupport,
+em_gsr_PackForward,
+em_gsr_Freight,
+em_gsr_AMCCMC,
+em_gsr_Insurance,
+em_gsr_discount
+from c_order co
+left join FIN_Paymentmethod pm on pm.FIN_Paymentmethod_ID = co.FIN_Paymentmethod_ID
+where co.c_order_id = $P{DOCUMENT_ID}]]>
+	</queryString>
+	<field name="paymentmethod" class="java.lang.String"/>
+	<field name="delivery" class="java.lang.String"/>
+	<field name="em_gsr_warranty" class="java.lang.String"/>
+	<field name="em_gsr_installation" class="java.lang.String"/>
+	<field name="em_gsr_trainingsupport" class="java.lang.String"/>
+	<field name="em_gsr_packforward" class="java.lang.String"/>
+	<field name="em_gsr_freight" class="java.lang.String"/>
+	<field name="em_gsr_amccmc" class="java.lang.String"/>
+	<field name="em_gsr_insurance" class="java.lang.String"/>
+	<field name="em_gsr_discount" class="java.lang.String"/>
+	<group name="C_INVOICE_ID">
+		<groupExpression><![CDATA[]]></groupExpression>
+		<groupHeader>
+			<band splitType="Stretch"/>
+		</groupHeader>
+		<groupFooter>
+			<band splitType="Stretch"/>
+		</groupFooter>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band splitType="Stretch"/>
+	</title>
+	<pageHeader>
+		<band splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band splitType="Stretch"/>
+	</columnHeader>
+	<detail>
+		<band splitType="Stretch"/>
+	</detail>
+	<columnFooter>
+		<band splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band splitType="Stretch"/>
+	</pageFooter>
+	<summary>
+		<band height="464" splitType="Stretch">
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" x="11" y="9" width="775" height="20" uuid="2bf5072c-2f8c-4684-9855-b87f6618a0eb"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="10" isBold="true" isUnderline="true"/>
+				</textElement>
+				<text><![CDATA[TERMS & CONDITIONS]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="113" width="141" height="20" uuid="d652d30a-d02e-4122-b79e-9652c89b1137"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[Warranty]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="142" width="141" height="20" uuid="442f8cf9-38ea-4bd8-99ad-d5281530d8d6"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[Delivery]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="171" width="141" height="20" uuid="3d7bb0a8-cd08-48d9-889d-676e0e13f8b3"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[Installation]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="202" width="141" height="20" uuid="9e6f2da4-681f-40a9-9d16-5704a2e2a5e3"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[Training Support]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="232" width="141" height="20" uuid="35114b8b-1490-4f9e-87c4-ce0b77752be9"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[Packing and Forwarding]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="261" width="141" height="20" uuid="ec03043c-9f67-4af2-a9b1-2e556388098e"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[Freight]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="290" width="141" height="20" uuid="8bcb04a4-9eb4-42b5-a1e3-1972a4f53308"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[AMC/CMC]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="320" width="141" height="20" uuid="a9a2d52e-e051-432f-9a10-abc329e89b27"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[Insurance]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="152" y="113" width="11" height="20" uuid="4efc3685-c4a9-46b3-9534-fd2f35ba0649"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[ : ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="152" y="142" width="11" height="20" uuid="c507f189-c5d0-4b38-a56e-21101b20ddad"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[ : ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="152" y="171" width="11" height="20" uuid="40c304b2-fdd5-4389-bef3-e49bfa9f4da5"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[ : ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="152" y="202" width="11" height="20" uuid="d0dd0bf1-b900-4216-82e8-202ca677a24b"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[ : ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="152" y="232" width="11" height="20" uuid="9f0b59e1-21a8-4d30-a574-76537066b159"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[ : ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="152" y="261" width="11" height="20" uuid="a47f1aa9-ed24-4b8c-9acc-f343e5457b6d"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[ : ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="152" y="290" width="11" height="20" uuid="02b6b867-e692-4897-8817-40f0ebcf4796"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[ : ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="152" y="320" width="11" height="20" uuid="4cefce67-19b1-449c-8969-5790cb40fa94"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[ : ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="152" y="56" width="11" height="20" uuid="81cecef6-886a-4f29-afc3-a8a06f49d8e1"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[ : ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="56" width="141" height="20" uuid="80b78da4-2321-4f36-a68e-bb60516ffba8"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[Payment Method]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="163" y="56" width="623" height="20" uuid="a931c792-57ca-47df-a18d-6c22fcf26a7e"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{paymentmethod}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="163" y="142" width="623" height="20" uuid="890420e1-6cc4-461f-a162-f60d237a6b78"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{delivery}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="163" y="113" width="623" height="20" uuid="18e1dafb-b3d0-437b-91f7-4c758d6180eb"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{em_gsr_warranty}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="163" y="232" width="623" height="20" uuid="700cb9c7-687b-431c-8e26-83fb686f0af7"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{em_gsr_packforward}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="163" y="202" width="623" height="20" uuid="d6acd038-3edb-4277-8674-0c2a81495864"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{em_gsr_trainingsupport}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="163" y="171" width="623" height="20" uuid="f3d87430-a81a-4e90-9f07-f812d412cd62"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{em_gsr_installation}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="163" y="261" width="623" height="20" uuid="613af80b-7d0b-443a-bdad-b0f7ebcd4cef"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{em_gsr_freight}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="163" y="290" width="623" height="20" uuid="ed7e3fd4-9a78-43cc-8ec4-24ad60476196"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{em_gsr_amccmc}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="163" y="320" width="623" height="20" uuid="50c0dde9-aa04-4789-ba54-0f6844491284"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{em_gsr_insurance}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement stretchType="RelativeToBandHeight" x="4" y="0" width="782" height="464" uuid="6f1278f3-e3bb-4704-a860-4d5565c309da"/>
+				<box>
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement>
+					<font fontName="SansSerif" size="8" isBold="false" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="686" y="426" width="100" height="20" uuid="fb3147cc-68c7-4879-9709-c609d302b6bf"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[Page 2 of 2]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="85" width="141" height="20" uuid="3d1bfc3a-0210-4bae-a4e0-aa163c91b900"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[Discount]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="152" y="85" width="11" height="20" uuid="9767327d-7bfc-44fd-8965-0b55a345fbab"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[ : ]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="163" y="85" width="623" height="20" uuid="b303412f-4462-4f50-8ba9-7f0ea85d6fb4"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{em_gsr_discount}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="11" y="349" width="675" height="40" uuid="0311870a-46eb-4be8-aa31-901c2787845b"/>
+				<textElement>
+					<font size="10" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[* All Disputes are subject to S.A.S. Nagar, Mohali Jurisdiction only
+* Goods once sold will not be returned
+* Bill not paid within 30 days will bear interest @18% P.A.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="390" width="775" height="36" uuid="3e476e46-713d-4665-b3d7-41d1f301fe6e"/>
+				<textElement textAlignment="Center">
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[For Further Details, Please Contact
+Advance Tech Administration Team, 9878417727
+Email- advancetechipl@gmail.com]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="426" width="775" height="20" uuid="f9019884-b4e9-45a4-ba7a-69aa557d5aca"/>
+				<textElement textAlignment="Center">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Thank You!!!]]></text>
+			</staticText>
+			<line>
+				<reportElement x="4" y="389" width="782" height="1" uuid="a568f099-5657-42e1-9dab-c7158d5ae7ce"/>
+			</line>
+		</band>
+	</summary>
+</jasperReport>

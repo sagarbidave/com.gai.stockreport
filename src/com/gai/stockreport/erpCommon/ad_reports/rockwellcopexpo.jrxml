@@ -1,0 +1,698 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="rockwellcopexpo" pageWidth="650" pageHeight="890" whenNoDataType="AllSectionsNoDetail" columnWidth="622" leftMargin="14" rightMargin="14" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="1.8150000000000028"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="ireport.scriptlethandling" value="0"/>
+	<property name="ireport.encoding" value="UTF-8"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.util.*"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<parameter name="BASE_WEB" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="BASE_DESIGN" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUB_REPORT" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{BASE_DESIGN} + "/com/saksham/production/erpReports"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="DOCUMENT_ID" class="java.lang.String"/>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String">
+		<defaultValueExpression><![CDATA[$P{BASE_DESIGN}+"/com/approval/management/erpReports/"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="ATTACH" class="java.lang.String" isForPrompting="false"/>
+	<parameter name="LANGUAGE" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["en_US"]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT C_ORDER.C_ORDER_ID,( SELECT NAME
+    FROM AD_REF_LIST_V
+    WHERE AD_REFERENCE_ID = '92200E3EF8BD456BAA92BC49B3B01812'
+          AND AD_LANGUAGE IN ('en_US') and AD_REF_LIST_V.value=C_ORDER.em_sprd_freight_terms) as em_sprd_freight_terms , C_BPARTNER.NAME, L.ADDRESS1 ||
+(CASE WHEN (L.POSTAL||L.CITY||R.NAME) IS NOT NULL THEN (CHR(10)||L.POSTAL || (CASE WHEN L.POSTAL IS NOT NULL THEN (' - '||TO_CHAR(L.CITY)) END) ||
+(CASE WHEN R.NAME IS NOT NULL THEN (' ('||TO_CHAR(R.NAME)|| ')') END)) END) AS ADDRESS1,
+C_BPARTNER_LOCATION.PHONE,C_BPARTNER_LOCATION.FAX,
+C_ORDER.DESCRIPTION, C_ORDER.DATEORDERED, C_ORDER.DOCUMENTNO AS ALBARAN,
+AD_CLIENT.DESCRIPTION AS ENTITY,
+C_LOCATION_DESCRIPTION(AD_ORGINFO.em_sprd_location_id) AS LOCATION,  AD_ORG.ad_org_id AS ORGANIZATIONID, C_ORDER.docstatus AS STATUS,
+(COALESCE(TO_CHAR(ADDRESS1), '') || CASE WHEN ADDRESS1 IS null THEN '' ELSE CHR(13) END ||
+COALESCE(TO_CHAR(ADDRESS2), '') ||
+COALESCE(TO_CHAR(L.CITY), '') ||'-'|| COALESCE(TO_CHAR(POSTAL), '') || CASE WHEN L.CITY IS null THEN '' ELSE CHR(13) END || COALESCE(TO_CHAR(CO.NAME), '') || CASE WHEN CO.NAME IS null THEN '' ELSE CHR(13) END ||
+COALESCE(TO_CHAR(C_BPARTNER_LOCATION.PHONE), '') || CASE WHEN C_BPARTNER_LOCATION.PHONE IS null THEN '' ELSE CHR(13) END || COALESCE(TO_CHAR(C_BPARTNER_LOCATION.FAX), '') ||
+CASE WHEN C_BPARTNER_LOCATION.FAX IS null THEN '' ELSE CHR(13)  END || CASE WHEN AD_USER.FIRSTNAME IS NULL THEN '' ELSE CHR(13) END||
+CASE WHEN AD_USER.PHONE IS NULL THEN '' ELSE CHR(13) END|| CASE WHEN AD_USER.EMAIL IS NULL THEN '' ELSE CHR(13) END) AS BP_DATA,
+AD_ORGINFO.TAXID AS ORG_TAXID, SHOWLOGO, SHOWCOMPANYDATA, HEADERMARGIN,
+coalesce(AD_CLIENT.name,'')||' '||coalesce(AD_ORG.NAME,'') AS ORG_NAME,
+C_ORDER.Deliverynotes as deliverynotes,
+DELIVERYRULE.NAME AS DELIVERYTERM,
+C_ORDER.Description as Remarks,
+PAYMENTTERM.TERM AS PAYMENTTERM, C_POC_DOCTYPE_TEMPLATE.NAME AS DOC_TYPE, C_CURRENCY.ISO_CODE as CURRENCY_ISO, M_PRICELIST.ISTAXINCLUDED,
+sprd_amnt_usdinr_words(C_order.GRANDTOTAL,c_order.c_currency_id) AS AMTTOWORDS,
+AD_ORGINFO.em_sprd_eccno,
+AD_ORGINFO.em_sprd_cerange,
+AD_ORGINFO.em_sprd_tinno,
+AD_ORGINFO.em_sprd_cstno,
+AD_ORGINFO.em_sprd_commission,
+AD_ORGINFO.em_sprd_division,
+AD_ORGINFO.em_sprd_phoneno,
+AD_ORGINFO.em_sprd_mobileno,
+C_ORDER.description as remarks,
+C_ORDER.em_sprd_make as make,
+C_ORDER.em_sprd_refbudget as budget,
+C_ORDER.em_sprd_warrantydetail as warranty,
+C_ORDER.em_sprd_penaltyclause as penalty,
+c_order.docstatus as complete,
+ad_column_identifier('AD_User',c_order.createdby,'en_US') as preparedby,(select array_to_string(array_agg(coalesce(name,'')),',') AS test from am_orderapproval,ad_user where c_order_id=c_order.c_order_id and ad_user.ad_user_id=am_orderapproval.ad_user_id and approverorder <> (select max(approverorder) from am_orderapproval where c_order_id=c_order.c_order_id))  as verifiedby,
+(select ad_column_identifier('AD_User',ad_user_id,'en_US') from am_orderapproval where approverorder = (select max(approverorder) from am_orderapproval where c_order_id=C_order.c_order_id) and c_order_id=C_order.c_order_id) as updatedby,
+C_Order.C_Currency_ID as currency,
+Coalesce('LETTER OF INTENT (')|| Coalesce(AD_ORG.Name,'')||Coalesce(')') as orgname
+FROM C_BPARTNER_LOCATION left join C_LOCATION L on C_BPARTNER_LOCATION.C_LOCATION_ID = L.C_LOCATION_ID
+             left join C_COUNTRY CO ON L.C_COUNTRY_ID = CO.C_COUNTRY_ID
+             left join  C_REGION R on L.C_REGION_ID = R.C_REGION_ID,
+     AD_USER right join C_ORDER on AD_USER.AD_USER_ID = C_ORDER.AD_USER_ID
+                         left join C_POC_DOCTYPE_TEMPLATE ON C_POC_DOCTYPE_TEMPLATE.C_DOCTYPE_ID = C_ORDER.C_DOCTYPETARGET_ID,
+C_BPARTNER, AD_ORGINFO, AD_CLIENT, AD_ORG,
+   (SELECT VALUE, NAME
+    FROM AD_REF_LIST_V
+    WHERE AD_REFERENCE_ID = '151'
+          AND AD_LANGUAGE IN ('en_US')) DELIVERYRULE,
+   (SELECT C_PAYMENTTERM.C_PAYMENTTERM_ID, COALESCE( C_PAYMENTTERM_TRL.NAME, C_PAYMENTTERM.NAME) AS TERM
+    FROM C_PAYMENTTERM LEFT JOIN C_PAYMENTTERM_TRL ON C_PAYMENTTERM.C_PAYMENTTERM_ID = C_PAYMENTTERM_TRL.C_PAYMENTTERM_ID
+          AND C_PAYMENTTERM_TRL.AD_LANGUAGE IN ('en_US')) PAYMENTTERM, C_CURRENCY, M_PRICELIST
+WHERE C_ORDER.C_BPARTNER_LOCATION_ID = C_BPARTNER_LOCATION.C_BPARTNER_LOCATION_ID
+AND C_ORDER.M_PRICELIST_ID = M_PRICELIST.M_PRICELIST_ID
+AND C_ORDER.C_BPARTNER_ID = C_BPARTNER.C_BPARTNER_ID
+AND AD_ORG.ad_org_id = AD_ORGINFO.ad_org_id
+AND AD_ORG.ad_org_id = C_ORDER.AD_ORG_ID
+AND C_ORDER.AD_CLIENT_ID = AD_CLIENT.AD_CLIENT_ID
+AND C_ORDER.C_ORDER_ID IN ($P{DOCUMENT_ID})
+AND C_ORDER.DELIVERYRULE = DELIVERYRULE.VALUE
+AND C_ORDER.C_PAYMENTTERM_ID = PAYMENTTERM.C_PAYMENTTERM_ID
+AND C_ORDER.DOCSTATUS !='DR'
+AND C_CURRENCY.C_CURRENCY_ID=C_ORDER.C_CURRENCY_ID]]>
+	</queryString>
+	<field name="c_order_id" class="java.lang.String"/>
+	<field name="em_sprd_freight_terms" class="java.lang.String"/>
+	<field name="name" class="java.lang.String"/>
+	<field name="address1" class="java.lang.String"/>
+	<field name="phone" class="java.lang.String"/>
+	<field name="fax" class="java.lang.String"/>
+	<field name="description" class="java.lang.String"/>
+	<field name="dateordered" class="java.sql.Timestamp"/>
+	<field name="albaran" class="java.lang.String"/>
+	<field name="entity" class="java.lang.String"/>
+	<field name="location" class="java.lang.String"/>
+	<field name="organizationid" class="java.lang.String"/>
+	<field name="status" class="java.lang.String"/>
+	<field name="bp_data" class="java.lang.String"/>
+	<field name="org_taxid" class="java.lang.String"/>
+	<field name="showlogo" class="java.lang.String"/>
+	<field name="showcompanydata" class="java.lang.String"/>
+	<field name="headermargin" class="java.lang.String"/>
+	<field name="org_name" class="java.lang.String"/>
+	<field name="deliverynotes" class="java.lang.String"/>
+	<field name="deliveryterm" class="java.lang.String"/>
+	<field name="remarks" class="java.lang.String"/>
+	<field name="paymentterm" class="java.lang.String"/>
+	<field name="doc_type" class="java.lang.String"/>
+	<field name="currency_iso" class="java.lang.String"/>
+	<field name="istaxincluded" class="java.lang.String"/>
+	<field name="amttowords" class="java.lang.String"/>
+	<field name="em_sprd_eccno" class="java.lang.String"/>
+	<field name="em_sprd_cerange" class="java.lang.String"/>
+	<field name="em_sprd_tinno" class="java.lang.String"/>
+	<field name="em_sprd_cstno" class="java.lang.String"/>
+	<field name="em_sprd_commission" class="java.lang.String"/>
+	<field name="em_sprd_division" class="java.lang.String"/>
+	<field name="em_sprd_phoneno" class="java.lang.String"/>
+	<field name="em_sprd_mobileno" class="java.lang.String"/>
+	<field name="make" class="java.lang.String"/>
+	<field name="budget" class="java.lang.String"/>
+	<field name="warranty" class="java.lang.String"/>
+	<field name="penalty" class="java.lang.String"/>
+	<field name="complete" class="java.lang.String"/>
+	<field name="preparedby" class="java.lang.String"/>
+	<field name="verifiedby" class="java.lang.String"/>
+	<field name="updatedby" class="java.lang.String"/>
+	<field name="currency" class="java.lang.String"/>
+	<field name="orgname" class="java.lang.String"/>
+	<variable name="Total" class="java.lang.Double" resetType="None" calculation="Sum">
+		<variableExpression><![CDATA[$V{Total}]]></variableExpression>
+	</variable>
+	<variable name="inwords" class="java.lang.String">
+		<variableExpression><![CDATA[$V{inwords}.toString()]]></variableExpression>
+	</variable>
+	<background>
+		<band height="800" splitType="Stretch">
+			<line>
+				<reportElement key="line" x="0" y="0" width="1" height="800"/>
+			</line>
+			<line>
+				<reportElement key="line" x="621" y="0" width="1" height="800"/>
+			</line>
+			<line>
+				<reportElement key="line" x="0" y="0" width="622" height="1"/>
+			</line>
+		</band>
+	</background>
+	<title>
+		<band height="32" splitType="Stretch">
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField-1" x="498" y="1" width="58" height="18"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Page " + $V{PAGE_NUMBER} + " of "]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report" isBlankWhenNull="false">
+				<reportElement key="textField-2" x="558" y="1" width="58" height="18"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA["" + $V{PAGE_NUMBER} + ""]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="staticText-47" x="440" y="17" width="180" height="15"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<text><![CDATA[LOI Format No : RIL/U1/PUR/QSF/07]]></text>
+			</staticText>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="0" y="0" width="622" height="32"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{orgname}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="223" splitType="Stretch">
+			<line>
+				<reportElement key="line-1" x="0" y="0" width="622" height="1"/>
+			</line>
+			<line>
+				<reportElement key="line-2" x="0" y="31" width="272" height="1"/>
+			</line>
+			<staticText>
+				<reportElement key="staticText-2" mode="Transparent" x="2" y="3" width="215" height="26" backcolor="#4BD950"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Invoice To :  ]]></text>
+			</staticText>
+			<line>
+				<reportElement key="line-4" x="1" y="97" width="270" height="1"/>
+			</line>
+			<staticText>
+				<reportElement key="staticText-5" x="2" y="99" width="263" height="18"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="12" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Supplier Name, Address & Tin No.:]]></text>
+			</staticText>
+			<line>
+				<reportElement key="line-5" x="1" y="118" width="270" height="1"/>
+			</line>
+			<line>
+				<reportElement key="line-74" x="0" y="0" width="1" height="223"/>
+			</line>
+			<line>
+				<reportElement key="line-3" stretchType="RelativeToBandHeight" x="270" y="0" width="1" height="223"/>
+			</line>
+			<staticText>
+				<reportElement key="staticText-3" mode="Transparent" x="273" y="1" width="76" height="19" backcolor="#4BD950"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[LOI No :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-4" mode="Transparent" x="273" y="19" width="75" height="14" backcolor="#4BD950"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[LOI Date :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-25" x="273" y="32" width="114" height="15"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Terms of Payment :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-26" x="273" y="46" width="75" height="15"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Freight :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-27" x="273" y="60" width="112" height="19"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Delivery Notes:]]></text>
+			</staticText>
+			<line>
+				<reportElement key="line-73" x="621" y="0" width="1" height="223"/>
+			</line>
+			<textField pattern="dd/MM/yyyy" isBlankWhenNull="false">
+				<reportElement key="textField" x="388" y="18" width="103" height="16"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.sql.Timestamp"><![CDATA[$F{dateordered}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement key="textField" x="3" y="30" width="262" height="16"/>
+				<textElement verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{org_name}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement key="textField" x="388" y="46" width="233" height="15"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{em_sprd_freight_terms}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement key="textField" x="388" y="34" width="229" height="13"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{paymentterm}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement key="textField" x="16" y="139" width="265" height="84"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{bp_data}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement key="textField" x="36" y="81" width="234" height="16"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{em_sprd_phoneno}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="388" y="1" width="102" height="19"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{albaran}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="2" y="118" width="265" height="21"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{name}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="false">
+				<reportElement key="textField" x="3" y="47" width="262" height="34"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{location}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="staticText-34" x="2" y="81" width="40" height="16"/>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[Phone:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-36" x="273" y="148" width="347" height="18"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="12" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Terms & Conditions and/or Special Notes]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField" positionType="Float" stretchType="RelativeToBandHeight" x="272" y="166" width="348" height="57"/>
+				<box>
+					<pen lineWidth="0.0"/>
+					<topPen lineWidth="0.0"/>
+					<leftPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement verticalAlignment="Top"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{remarks}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField" x="388" y="61" width="231" height="19"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{deliverynotes}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement key="line-80" x="270" y="165" width="352" height="1"/>
+			</line>
+			<line>
+				<reportElement key="line-81" x="271" y="148" width="350" height="1"/>
+			</line>
+			<line>
+				<reportElement key="line-82" x="385" y="0" width="1" height="148"/>
+			</line>
+			<staticText>
+				<reportElement key="staticText-4" mode="Transparent" x="273" y="79" width="111" height="14" backcolor="#4BD950"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Make :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-4" mode="Transparent" x="273" y="93" width="111" height="14" backcolor="#4BD950"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Ref.Budget :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-4" mode="Transparent" x="273" y="107" width="111" height="14" backcolor="#4BD950"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Warranty details :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-4" mode="Transparent" x="273" y="121" width="111" height="14" backcolor="#4BD950"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Penalty Clause :]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="388" y="80" width="103" height="13"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{make}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="388" y="93" width="100" height="14"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{budget}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="388" y="107" width="100" height="14"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{warranty}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="388" y="121" width="100" height="14"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{penalty}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band splitType="Stretch"/>
+	</columnHeader>
+	<detail>
+		<band height="26" splitType="Stretch">
+			<subreport isUsingCache="true">
+				<reportElement key="subreport" stretchType="RelativeToBandHeight" x="0" y="0" width="622" height="26"/>
+				<subreportParameter name="SUBREPORT_DIR">
+					<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="LANGUAGE">
+					<subreportParameterExpression><![CDATA[$P{LANGUAGE}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DOCUMENT_ID">
+					<subreportParameterExpression><![CDATA[$P{DOCUMENT_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="BASE_WEB">
+					<subreportParameterExpression><![CDATA[$P{BASE_WEB}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="BASE_DESIGN">
+					<subreportParameterExpression><![CDATA[$P{BASE_DESIGN}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="ATTACH">
+					<subreportParameterExpression><![CDATA[$P{ATTACH}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="SUB_REPORT">
+					<subreportParameterExpression><![CDATA[$P{SUB_REPORT}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "rockwellpo_subreport1.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="279" splitType="Stretch">
+			<staticText>
+				<reportElement key="staticText-12" x="2" y="121" width="77" height="26"/>
+				<textElement verticalAlignment="Top">
+					<font fontName="SansSerif" size="12" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[ In Words : ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-13" x="3" y="146" width="308" height="34"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="12" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Our Excise & Tax Details :]]></text>
+			</staticText>
+			<line>
+				<reportElement key="line-68" x="0" y="146" width="622" height="1"/>
+			</line>
+			<line>
+				<reportElement key="line-69" x="621" y="0" width="1" height="279"/>
+			</line>
+			<line>
+				<reportElement key="line-70" x="0" y="0" width="1" height="279"/>
+			</line>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement key="textField" x="78" y="123" width="543" height="24"/>
+				<textElement verticalAlignment="Top"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{amttowords}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="staticText-28" x="4" y="180" width="67" height="22"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="12" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[ECC No. :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-29" x="4" y="202" width="67" height="22"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="12" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Range   :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-30" x="3" y="234" width="68" height="22"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="12" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Division :]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement key="textField" x="71" y="180" width="210" height="22"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{em_sprd_eccno}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement key="textField" x="71" y="202" width="240" height="32"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{em_sprd_cerange}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement key="textField" x="71" y="234" width="210" height="22"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{em_sprd_division}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="staticText-31" x="320" y="181" width="68" height="22"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="12" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[TIN No. :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-32" x="320" y="203" width="68" height="22"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="12" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[CST No. :]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement key="textField" x="388" y="181" width="227" height="22"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{em_sprd_tinno}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement key="textField" x="388" y="203" width="227" height="22"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{em_sprd_cstno}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="staticText-33" x="3" y="256" width="136" height="22"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="12" isBold="true" pdfFontName="Helvetica-Bold"/>
+				</textElement>
+				<text><![CDATA[Commissionerate :]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField" x="139" y="256" width="167" height="22"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{em_sprd_commission}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement key="line-76" x="312" y="146" width="1" height="133"/>
+			</line>
+			<line>
+				<reportElement key="line-78" x="0" y="0" width="622" height="1"/>
+			</line>
+			<line>
+				<reportElement key="line-79" x="0" y="179" width="622" height="1"/>
+			</line>
+			<staticText>
+				<reportElement key="staticText-38" x="1" y="1" width="91" height="12">
+					<printWhenExpression><![CDATA[new Boolean($F{currency}.equalsIgnoreCase( "304" ))]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<text><![CDATA[Company Policy :]]></text>
+			</staticText>
+			<rectangle>
+				<reportElement key="rectangle-1" x="2" y="13" width="619" height="107"/>
+			</rectangle>
+			<staticText>
+				<reportElement key="staticText-39" x="3" y="15" width="618" height="12">
+					<printWhenExpression><![CDATA[new Boolean($F{currency}.equalsIgnoreCase( "304" ))]]></printWhenExpression>
+				</reportElement>
+				<textElement/>
+				<text><![CDATA[1.All material has to be accompanied with  Test Report and PQS.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-40" x="3" y="26" width="618" height="12">
+					<printWhenExpression><![CDATA[new Boolean($F{currency}.equalsIgnoreCase( "304" ))]]></printWhenExpression>
+				</reportElement>
+				<textElement/>
+				<text><![CDATA[2.Invoice must mention our PO# and date, Drawing# or specification#]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-41" x="3" y="36" width="618" height="12">
+					<printWhenExpression><![CDATA[new Boolean($F{currency}.equalsIgnoreCase( "304" ))]]></printWhenExpression>
+				</reportElement>
+				<textElement/>
+				<text><![CDATA[3.Item name on invoice should match with that in the PO.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-42" x="3" y="48" width="618" height="12">
+					<printWhenExpression><![CDATA[new Boolean($F{currency}.equalsIgnoreCase( "304" ))]]></printWhenExpression>
+				</reportElement>
+				<textElement/>
+				<text><![CDATA[4.Do not send any excess material.In case we receive any excess quantity, It may be sent back on 'To pay basis'.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-43" x="3" y="60" width="618" height="12">
+					<printWhenExpression><![CDATA[new Boolean($F{currency}.equalsIgnoreCase( "304" ))]]></printWhenExpression>
+				</reportElement>
+				<textElement/>
+				<text><![CDATA[5.In case the physical count of shipped material is different from the invoice quantity, 10% of invoice value will be deducted.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-44" x="3" y="72" width="618" height="12">
+					<printWhenExpression><![CDATA[new Boolean($F{currency}.equalsIgnoreCase( "304" ))]]></printWhenExpression>
+				</reportElement>
+				<textElement/>
+				<text><![CDATA[6.Material to reach at our factory by 3:00 pm for material to be unloaded the same day.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-45" x="3" y="84" width="618" height="12">
+					<printWhenExpression><![CDATA[new Boolean($F{currency}.equalsIgnoreCase( "304" ))]]></printWhenExpression>
+				</reportElement>
+				<textElement/>
+				<text><![CDATA[7. In case the physical count of shipped material is different from the invoice quantity, the whole lot may be rejected.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-46" x="3" y="95" width="618" height="28">
+					<printWhenExpression><![CDATA[new Boolean($F{currency}.equalsIgnoreCase( "304" ))]]></printWhenExpression>
+				</reportElement>
+				<textElement/>
+				<text><![CDATA[8. Material must reach our unit before 4 PM for it to be unloaded the same day. Else the material may have to be unloaded on the next working day. ]]></text>
+			</staticText>
+		</band>
+	</columnFooter>
+	<pageFooter>
+		<band height="25" splitType="Stretch">
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="441" y="5" width="58" height="18"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Page " + $V{PAGE_NUMBER} + " of "]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report" isBlankWhenNull="false">
+				<reportElement key="textField" x="501" y="5" width="58" height="18"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.Integer"><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<lastPageFooter>
+		<band height="90" splitType="Stretch">
+			<staticText>
+				<reportElement key="staticText" x="2" y="2" width="161" height="35"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Prepared By]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText" x="180" y="2" width="230" height="35"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Verified By]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText" x="440" y="1" width="153" height="35"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Approved By]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField" x="0" y="37" width="163" height="20">
+					<printWhenExpression><![CDATA[new Boolean($F{status}.equalsIgnoreCase( "CO" )) || new Boolean($F{status}.equalsIgnoreCase( "CL" ))]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{preparedby}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement key="line-26" x="0" y="1" width="580" height="1"/>
+			</line>
+			<line>
+				<reportElement key="line" x="0" y="1" width="622" height="1"/>
+			</line>
+			<line>
+				<reportElement key="line" x="621" y="0" width="1" height="88"/>
+			</line>
+			<line>
+				<reportElement key="line" x="168" y="1" width="1" height="36"/>
+			</line>
+			<line>
+				<reportElement key="line" x="0" y="0" width="1" height="88"/>
+			</line>
+			<line>
+				<reportElement key="line" x="421" y="1" width="1" height="36"/>
+			</line>
+			<line>
+				<reportElement key="line-75" x="0" y="37" width="622" height="1"/>
+			</line>
+			<line>
+				<reportElement key="line-77" x="0" y="88" width="622" height="1"/>
+			</line>
+			<staticText>
+				<reportElement key="staticText" x="133" y="62" width="485" height="25">
+					<printWhenExpression><![CDATA[new Boolean($F{status}.equalsIgnoreCase( "CO" )) || new Boolean($F{status}.equalsIgnoreCase( "CL" ))]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[This is computer generated document hence signature is not required ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField" x="426" y="38" width="167" height="20">
+					<printWhenExpression><![CDATA[new Boolean($F{status}.equalsIgnoreCase( "CO" )) || new Boolean($F{status}.equalsIgnoreCase( "CL" ))]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{updatedby}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="180" y="40" width="230" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{verifiedby}]]></textFieldExpression>
+			</textField>
+		</band>
+	</lastPageFooter>
+	<summary>
+		<band splitType="Stretch"/>
+	</summary>
+</jasperReport>

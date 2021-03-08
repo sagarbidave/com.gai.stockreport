@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="INVOICE LINE" printOrder="Horizontal" pageWidth="842" pageHeight="150" orientation="Landscape" columnWidth="842" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="72f80b63-e8c2-46ab-a6ba-1445f71c7e84">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="ireport.scriptlethandling" value="0"/>
+	<property name="ireport.encoding" value="UTF-8"/>
+	<property name="net.sf.jasperreports.export.xls.detect.cell.type" value="true"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.util.*"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<style name="default" vAlign="Middle" fontName="Bitstream Vera Sans" fontSize="8"/>
+	<style name="Report_Title" fontName="Bitstream Vera Sans" fontSize="18"/>
+	<style name="Report_Subtitle" forecolor="#555555" fontName="Bitstream Vera Sans" fontSize="14"/>
+	<style name="Report_Data_Label" fontName="Bitstream Vera Sans" fontSize="11" isBold="true"/>
+	<style name="Report_Data_Field" fontName="Bitstream Vera Sans" fontSize="11" isBold="false"/>
+	<style name="Total_Field" mode="Opaque" forecolor="#000000" backcolor="#CCCCCC" vAlign="Middle" fontName="Bitstream Vera Sans" fontSize="11" isBold="true"/>
+	<style name="GroupHeader_DarkGray" mode="Opaque" forecolor="#FFFFFF" backcolor="#555555" vAlign="Middle" fontName="Bitstream Vera Sans" fontSize="12" isBold="true"/>
+	<style name="Group_Data_Label" fontName="Bitstream Vera Sans" fontSize="11" isBold="true"/>
+	<style name="Group_Data_Field" fontName="Bitstream Vera Sans" fontSize="11"/>
+	<style name="Detail_Header" mode="Opaque" forecolor="#FFFFFF" backcolor="#5D5D5D" vAlign="Middle" fontName="Bitstream Vera Sans" fontSize="10" isBold="true"/>
+	<style name="Detail_Line" fontName="Bitstream Vera Sans" fontSize="8">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[new Boolean($V{REPORT_COUNT}.intValue()%2==0)]]></conditionExpression>
+			<style mode="Opaque" backcolor="#CCCCCC"/>
+		</conditionalStyle>
+	</style>
+	<style name="Total_Gray" mode="Opaque" forecolor="#000000" backcolor="#CCCCCC"/>
+	<style name="Detail_Data_Label" mode="Opaque" backcolor="#CCCCCC" fontName="Bitstream Vera Sans" fontSize="10" isBold="true"/>
+	<style name="Detail_Data_Field" mode="Opaque" backcolor="#CCCCCC" fontName="Bitstream Vera Sans" fontSize="10"/>
+	<style name="Group_Footer" fontName="Bitstream Vera Sans" fontSize="11" isBold="true"/>
+	<style name="Report_Footer" isDefault="true" vAlign="Middle" fontName="Bitstream Vera Sans" fontSize="11"/>
+	<parameter name="NUMBERFORMAT" class="java.text.DecimalFormat" isForPrompting="false"/>
+	<parameter name="LOCALE" class="java.util.Locale" isForPrompting="false"/>
+	<parameter name="ISTAXINCLUDED" class="java.lang.String" isForPrompting="false"/>
+	<parameter name="DOCUMENT_ID" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[select distinct C_ORDER_ID,NAME_PRODUCT,QTYINVOICED,UOMNAME,VALUE,LINENETAMT,PRICEACTUAL,
+sum(CGSTAMT)as CGSTAMT,coalesce(sum(CGSTRATE),0.00)||' %' as CGSTRATE,
+sum(SGSTAMT)as SGSTAMT,coalesce(sum(SGSTRATE),0.00)||' %' as SGSTRATE,
+sum(IGSTAMT)as IGSTAMT,coalesce(sum(IGSTRATE),0.00)||' %' as IGSTRATE,
+sum(CGSTAMT)as CGSTAMT,coalesce(sum(CGSTRATE),0.00) as CGSTRATE1,
+sum(SGSTAMT)as SGSTAMT,coalesce(sum(SGSTRATE),0.00) as SGSTRATE1,
+sum(IGSTAMT)as IGSTAMT,coalesce(sum(IGSTRATE),0.00) as IGSTRATE1,
+case when name_product = 'Freight' then 1 else 2 end,discount,
+coalesce(sum(CGSTAMT),0)+coalesce(sum(SGSTAMT),0)+coalesce(sum(IGSTAMT),0) as total,hsncode, linetaxrate, productdescription
+from (
+SELECT Distinct C_ORDER.C_ORDER_ID,M_PRODUCT.NAME AS NAME_PRODUCT,sum(C_ORDERLINE.QTYORDERED ) as QTYINVOICED,
+C_UOM.NAME AS UOMNAME,M_PRODUCT.VALUE AS VALUE,
+sum(C_ORDERLINE.LINENETAMT) AS LINENETAMT,
+C_ORDERLINE.PRICEACTUAL AS PRICEACTUAL,(C_ORDERLINE.PRICEACTUAL-C_ORDERLINE.PRICELIST)*sum(C_ORDERLINE.QTYINVOICED) as discount,
+case when tax.name LIKE ('%CGST%') then sum(taxline.taxamt) else NULL end as CGSTAMT,
+case when tax.name LIKE ('%CGST%') then tax.rate else NULL end as CGSTRATE,
+case when tax.name LIKE ('%SGST%') then sum(taxline.taxamt) else NULL end as SGSTAMT,
+case when tax.name LIKE ('%SGST%') then tax.rate else NULL end as SGSTRATE,
+case when tax.name like '%IGST%' then sum(taxline.taxamt) else NULL end as IGSTAMT,
+case when tax.name like '%IGST%' then tax.rate else NULL end as IGSTRATE,
+'' as hsncode,
+coalesce(to_char(pt.rate),pt.description) as linetaxrate, c_orderline.description as productdescription
+FROM C_ORDERLINE
+left join M_PRODUCT on C_ORDERLINE.M_PRODUCT_ID = M_PRODUCT.M_PRODUCT_ID
+left join c_tax pt on pt.c_tax_id = C_ORDERLINE.c_tax_id
+left join C_UOM on C_ORDERLINE.C_UOM_ID = C_UOM.C_UOM_ID
+LEFT JOIN C_ORDER on C_ORDERLINE.C_ORDER_ID = C_ORDER.C_ORDER_ID
+left join m_attributesetinstance on m_attributesetinstance.m_attributesetinstance_id=C_ORDERLINE.m_attributesetinstance_id
+LEFT JOIN C_ORDERtax cit on cit.C_ORDER_ID = C_ORDER.C_ORDER_ID
+LEFT JOIN M_PriceList MP ON mp.m_pricelist_id=C_ORDER.m_pricelist_id
+LEFT JOIN M_PRICELIST_VERSION MPV ON MPV.M_PriceList_ID=MP.M_PriceList_ID
+LEFT JOIN M_ProductPrice MPP ON MPP.M_PriceList_Version_ID=MPV.M_PriceList_Version_ID,
+C_ORDERLINEtax taxline,c_tax tax,C_TaxCategory taxcategory
+WHERE
+taxline.C_ORDERLINE_ID = C_ORDERLINE.C_ORDERLINE_ID
+and tax.c_tax_id = taxline.c_tax_id
+and tax.c_tax_id = cit.c_tax_id
+and taxcategory.C_TaxCategory_ID = tax.C_TaxCategory_ID
+AND C_ORDER.C_ORDER_ID = $P{DOCUMENT_ID}
+AND C_ORDERLINE.M_PRODUCT_ID=MPP.M_PRODUCT_ID
+group by C_ORDER.C_ORDER_ID,M_PRODUCT.NAME,M_PRODUCT.M_PRODUCT_ID,C_ORDERLINE.M_PRODUCT_ID,C_ORDERLINE.DESCRIPTION,C_UOM.NAME,M_PRODUCT.VALUE,
+C_ORDERLINE.PRICEACTUAL,C_ORDERLINE.PRICELIST,tax.name,tax.rate,hsncode,taxcategory.name, linetaxrate
+)a
+group by C_ORDER_ID,NAME_PRODUCT,QTYINVOICED,UOMNAME,VALUE,LINENETAMT,PRICEACTUAL,discount,hsncode, linetaxrate, productdescription
+order by case when name_product = 'Freight' then 1 else 2 end desc]]>
+	</queryString>
+	<field name="c_order_id" class="java.lang.String"/>
+	<field name="name_product" class="java.lang.String"/>
+	<field name="qtyinvoiced" class="java.math.BigDecimal"/>
+	<field name="uomname" class="java.lang.String"/>
+	<field name="value" class="java.lang.String">
+		<fieldDescription><![CDATA[--OBTG:NVARCHAR--]]></fieldDescription>
+	</field>
+	<field name="linenetamt" class="java.math.BigDecimal"/>
+	<field name="priceactual" class="java.math.BigDecimal"/>
+	<field name="cgstamt" class="java.math.BigDecimal"/>
+	<field name="cgstrate" class="java.lang.String"/>
+	<field name="sgstamt" class="java.math.BigDecimal"/>
+	<field name="sgstrate" class="java.lang.String"/>
+	<field name="igstamt" class="java.math.BigDecimal"/>
+	<field name="igstrate" class="java.lang.String"/>
+	<field name="cgstrate1" class="java.math.BigDecimal"/>
+	<field name="sgstrate1" class="java.math.BigDecimal"/>
+	<field name="igstrate1" class="java.math.BigDecimal"/>
+	<field name="case" class="java.lang.Integer"/>
+	<field name="discount" class="java.math.BigDecimal"/>
+	<field name="total" class="java.math.BigDecimal"/>
+	<field name="hsncode" class="java.lang.String"/>
+	<field name="linetaxrate" class="java.lang.String"/>
+	<field name="productdescription" class="java.lang.String"/>
+	<variable name="TOTAL_LINENETAMT" class="java.math.BigDecimal" resetType="Group" resetGroup="C_INVOICE_ID" calculation="Sum">
+		<variableExpression><![CDATA[$F{linenetamt}]]></variableExpression>
+	</variable>
+	<variable name="TaxableAmt" class="java.math.BigDecimal">
+		<variableExpression><![CDATA[$F{linenetamt}]]></variableExpression>
+	</variable>
+	<variable name="CGST" class="java.math.BigDecimal">
+		<variableExpression><![CDATA[$F{linenetamt}.multiply(($F{cgstrate1}.divide(new BigDecimal("100"))))]]></variableExpression>
+	</variable>
+	<variable name="SGST" class="java.math.BigDecimal">
+		<variableExpression><![CDATA[$F{linenetamt}.multiply($F{sgstrate1}.divide(new BigDecimal("100")))]]></variableExpression>
+	</variable>
+	<variable name="IGST" class="java.math.BigDecimal">
+		<variableExpression><![CDATA[$F{linenetamt}.multiply($F{igstrate1}.divide(new BigDecimal("100")))]]></variableExpression>
+	</variable>
+	<variable name="Total" class="java.math.BigDecimal">
+		<variableExpression><![CDATA[$F{total}]]></variableExpression>
+	</variable>
+	<variable name="TotalTaxableAmt" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{linenetamt}.subtract($F{discount})]]></variableExpression>
+	</variable>
+	<variable name="LineTotal" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{total}.add($F{linenetamt})]]></variableExpression>
+	</variable>
+	<variable name="TaxTotal" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{total}]]></variableExpression>
+	</variable>
+	<group name="C_INVOICE_ID" isResetPageNumber="true">
+		<groupExpression><![CDATA[]]></groupExpression>
+		<groupHeader>
+			<band height="25" splitType="Stretch">
+				<staticText>
+					<reportElement key="staticText-1" x="34" y="0" width="75" height="24" uuid="7b82c2fa-1fc1-4373-8714-5f48f340c153"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="SansSerif" size="7" isBold="false"/>
+					</textElement>
+					<text><![CDATA[Item Code]]></text>
+				</staticText>
+				<staticText>
+					<reportElement key="staticText-4" x="1" y="0" width="33" height="24" uuid="0f592460-d841-4497-a0f1-242f632c9bb4"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="SansSerif" size="7" isBold="false"/>
+					</textElement>
+					<text><![CDATA[Sr. No.]]></text>
+				</staticText>
+				<staticText>
+					<reportElement key="staticText-5" x="496" y="0" width="62" height="24" uuid="19379e67-6719-4a19-acc9-8308d0a68b65"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="SansSerif" size="7" isBold="false"/>
+					</textElement>
+					<text><![CDATA[Unit Price]]></text>
+				</staticText>
+				<staticText>
+					<reportElement key="staticText-7" x="558" y="0" width="62" height="24" uuid="8d9a9a83-7a66-493e-8117-adf8fdc78802"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="SansSerif" size="7" isBold="false"/>
+					</textElement>
+					<text><![CDATA[Amount
+(without tax)]]></text>
+				</staticText>
+				<staticText>
+					<reportElement key="staticText-4" x="446" y="0" width="50" height="24" uuid="18a78dde-f56e-4d41-87f2-69dd8c943702"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="SansSerif" size="7" isBold="false"/>
+					</textElement>
+					<text><![CDATA[UOM]]></text>
+				</staticText>
+				<staticText>
+					<reportElement key="staticText-7" x="675" y="0" width="62" height="24" uuid="de4c1391-cadd-4d73-bd79-8c5b63b53415"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="SansSerif" size="7" isBold="false"/>
+					</textElement>
+					<text><![CDATA[GST Value]]></text>
+				</staticText>
+				<staticText>
+					<reportElement key="staticText-7" x="620" y="0" width="55" height="24" uuid="ad883e23-6a3f-481b-abf6-e6f2bf4ef114"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="SansSerif" size="7" isBold="false"/>
+					</textElement>
+					<text><![CDATA[GST %]]></text>
+				</staticText>
+				<staticText>
+					<reportElement key="staticText-3" x="109" y="0" width="145" height="24" uuid="56853e6f-997d-4c18-b8d3-34ea3a42a806"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="SansSerif" size="7" isBold="false"/>
+					</textElement>
+					<text><![CDATA[Item Name]]></text>
+				</staticText>
+				<staticText>
+					<reportElement key="staticText-3" x="407" y="0" width="39" height="24" uuid="8168d61b-801e-4c5d-bd3a-d037379fbf9e"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="SansSerif" size="7" isBold="false"/>
+					</textElement>
+					<text><![CDATA[Qty.]]></text>
+				</staticText>
+				<staticText>
+					<reportElement key="staticText-7" x="737" y="0" width="62" height="24" uuid="27173d46-60c9-4070-b8c6-c410735dcebf"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="SansSerif" size="7" isBold="false"/>
+					</textElement>
+					<text><![CDATA[Total Amount]]></text>
+				</staticText>
+				<line>
+					<reportElement x="-1" y="24" width="800" height="1" uuid="f9c7a485-78ca-4aab-b08b-c33c23f71b08"/>
+					<graphicElement>
+						<pen lineWidth="0.5"/>
+					</graphicElement>
+				</line>
+				<staticText>
+					<reportElement key="staticText-3" x="254" y="0" width="153" height="24" uuid="390da9eb-16e1-4cf4-bbd8-30968fb5a8a1"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="SansSerif" size="7" isBold="false"/>
+					</textElement>
+					<text><![CDATA[Description]]></text>
+				</staticText>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band splitType="Stretch"/>
+		</groupFooter>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band splitType="Stretch"/>
+	</title>
+	<pageHeader>
+		<band splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band splitType="Stretch"/>
+	</columnHeader>
+	<detail>
+		<band height="14" splitType="Stretch">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement key="textField" positionType="Float" stretchType="RelativeToBandHeight" x="36" y="0" width="73" height="14" uuid="1fb8b3e1-f0e1-4310-b2f9-204adec4c841"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="7"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{value}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true">
+				<reportElement key="textField-5" x="496" y="0" width="58" height="14" uuid="eb13983d-5afc-44a0-8714-be12548cffd5"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="7"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{priceactual}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true">
+				<reportElement key="textField" x="558" y="0" width="58" height="14" uuid="99508422-d207-4a93-9ee9-d0e9a685124b"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="7"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{linenetamt}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement key="textField" x="111" y="0" width="143" height="14" uuid="94699719-f4f0-493f-b38f-d3ea5289b3dc"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="7"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{name_product}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true">
+				<reportElement key="textField-6" x="407" y="0" width="39" height="14" uuid="741e4e91-8df1-44e3-b6fe-7597223fb6f1"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="7"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qtyinvoiced}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true">
+				<reportElement key="textField" x="675" y="0" width="57" height="14" uuid="a5477667-01bc-4b6c-9f47-159d067c80a1"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="7"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{TaxableAmt}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true">
+				<reportElement key="textField" x="620" y="0" width="55" height="14" uuid="e7f7c487-17a6-46f9-a41a-037659e22a09"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="7"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{linetaxrate}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true">
+				<reportElement key="textField" x="737" y="0" width="55" height="14" uuid="881800d6-ef79-4015-8557-59806cc23c6c"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="7"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{linenetamt}.add($V{CGST}).add($V{SGST}).add($V{IGST})]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement key="textField-2" x="1" y="0" width="33" height="14" uuid="12b6bacf-178b-49ba-8e68-5f8b07bfcf28"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="7"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{REPORT_COUNT}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement key="textField" x="446" y="0" width="50" height="14" uuid="f1c14e07-ea78-4e68-a49d-37460b27d6f9"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="7"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{uomname}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement key="textField" x="256" y="0" width="147" height="14" uuid="5423cf7c-8c22-47a3-816d-0409bb566d66"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="7"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{productdescription}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band splitType="Stretch"/>
+	</pageFooter>
+	<summary>
+		<band splitType="Stretch"/>
+	</summary>
+</jasperReport>

@@ -1,0 +1,100 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<data>
+<!--160DA76E37DE41FB9BCB16C9DDC90510--><OBCQL_WIDGET_QUERY>
+<!--160DA76E37DE41FB9BCB16C9DDC90510-->  <OBCQL_WIDGET_QUERY_ID><![CDATA[160DA76E37DE41FB9BCB16C9DDC90510]]></OBCQL_WIDGET_QUERY_ID>
+<!--160DA76E37DE41FB9BCB16C9DDC90510-->  <AD_CLIENT_ID><![CDATA[0]]></AD_CLIENT_ID>
+<!--160DA76E37DE41FB9BCB16C9DDC90510-->  <AD_ORG_ID><![CDATA[0]]></AD_ORG_ID>
+<!--160DA76E37DE41FB9BCB16C9DDC90510-->  <ISACTIVE><![CDATA[Y]]></ISACTIVE>
+<!--160DA76E37DE41FB9BCB16C9DDC90510-->  <OBKMO_WIDGET_CLASS_ID><![CDATA[6F125C8851714E5E80CEACFE4EBF88D7]]></OBKMO_WIDGET_CLASS_ID>
+<!--160DA76E37DE41FB9BCB16C9DDC90510-->  <HQL><![CDATA[select e.opcrmCommercialname as customername,
+e.oPCRMAssignedTo.name as assignto,
+e.comments as comments,
+e.id as recordid,
+e.opcrmCity as City,e.opcrmExpclosedate as Expclosedate,
+e.opcrmSequencenumber as opcrmSequencenumber,
+region.name as regionname,
+e.opcrmCity as city,
+(select a.commercialName from opcrm_interests a where a.id = e.opcrmInterest.id) as interestname
+from ADUser e 
+left join e.opcrmRegion as region
+where e.opcrmIslead='Y'
+and e.opcrmLeadstatus ='opcrmQualified'
+and e.id not in (select e.opcrmRelatedlead from Order e where e.salesTransaction='Y')
+and @optional_filters@
+order by e.creationDate]]></HQL>
+<!--160DA76E37DE41FB9BCB16C9DDC90510-->  <TYPE><![CDATA[HQL]]></TYPE>
+<!--160DA76E37DE41FB9BCB16C9DDC90510--></OBCQL_WIDGET_QUERY>
+
+<!--B8D3B39EC0E74917959CD3FFD2CEFD87--><OBCQL_WIDGET_QUERY>
+<!--B8D3B39EC0E74917959CD3FFD2CEFD87-->  <OBCQL_WIDGET_QUERY_ID><![CDATA[B8D3B39EC0E74917959CD3FFD2CEFD87]]></OBCQL_WIDGET_QUERY_ID>
+<!--B8D3B39EC0E74917959CD3FFD2CEFD87-->  <AD_CLIENT_ID><![CDATA[0]]></AD_CLIENT_ID>
+<!--B8D3B39EC0E74917959CD3FFD2CEFD87-->  <AD_ORG_ID><![CDATA[0]]></AD_ORG_ID>
+<!--B8D3B39EC0E74917959CD3FFD2CEFD87-->  <ISACTIVE><![CDATA[Y]]></ISACTIVE>
+<!--B8D3B39EC0E74917959CD3FFD2CEFD87-->  <OBKMO_WIDGET_CLASS_ID><![CDATA[7394419424F04A20B155BD2B03E5D54C]]></OBKMO_WIDGET_CLASS_ID>
+<!--B8D3B39EC0E74917959CD3FFD2CEFD87-->  <HQL><![CDATA[select e.updated, e.opcrmCommercialname as customername,
+e.oPCRMAssignedTo.name as assignto,
+e.opcrmLeadstatus as opcrmLeadstatus,
+e.opcrmStatStage.commercialName as opcrmStatStage,
+e.comments as comments,
+(Select max(a.note) from OBUIAPP_Note a where a.record = e.id ) as note,
+(Select max(a.updatedBy.name) from OBUIAPP_Note a where a.record = e.id ) as noteupdatedby,
+e.opcrmInterest.interestname as interestname,
+e.opcrmRegion.name as region,
+e.opcrmCity as city,
+e.opcrmExpclosedate as closedate,
+e.opcrmSequencenumber as docno,
+e.id as recordid
+from ADUser e 
+left join e.opcrmRegion as region
+left join e.opcrmInterest int
+where e.opcrmIslead='Y'
+and e.updated >= current_date()-7
+and @optional_filters@
+order by e.creationDate asc]]></HQL>
+<!--B8D3B39EC0E74917959CD3FFD2CEFD87-->  <TYPE><![CDATA[HQL]]></TYPE>
+<!--B8D3B39EC0E74917959CD3FFD2CEFD87--></OBCQL_WIDGET_QUERY>
+
+<!--C7B1F4D34FFC45A3BF065E20ED8DC09A--><OBCQL_WIDGET_QUERY>
+<!--C7B1F4D34FFC45A3BF065E20ED8DC09A-->  <OBCQL_WIDGET_QUERY_ID><![CDATA[C7B1F4D34FFC45A3BF065E20ED8DC09A]]></OBCQL_WIDGET_QUERY_ID>
+<!--C7B1F4D34FFC45A3BF065E20ED8DC09A-->  <AD_CLIENT_ID><![CDATA[0]]></AD_CLIENT_ID>
+<!--C7B1F4D34FFC45A3BF065E20ED8DC09A-->  <AD_ORG_ID><![CDATA[0]]></AD_ORG_ID>
+<!--C7B1F4D34FFC45A3BF065E20ED8DC09A-->  <ISACTIVE><![CDATA[Y]]></ISACTIVE>
+<!--C7B1F4D34FFC45A3BF065E20ED8DC09A-->  <OBKMO_WIDGET_CLASS_ID><![CDATA[3D1AC3853F5B4967B2E65668E396C473]]></OBKMO_WIDGET_CLASS_ID>
+<!--C7B1F4D34FFC45A3BF065E20ED8DC09A-->  <HQL><![CDATA[select e.production.gsrSalesorder.documentNo as iono,
+e.production.gsrProcess.name as activity,
+e.requiredQuantity as reqqty, e.productionQuantity as comqty,
+(e.requiredQuantity - e.productionQuantity) as pendingqty
+from MaterialMgmtProductionPlan e
+where  (e.requiredQuantity - e.productionQuantity)>0
+and @optional_filters@]]></HQL>
+<!--C7B1F4D34FFC45A3BF065E20ED8DC09A-->  <TYPE><![CDATA[HQL]]></TYPE>
+<!--C7B1F4D34FFC45A3BF065E20ED8DC09A--></OBCQL_WIDGET_QUERY>
+
+<!--D635A982BE254889B05302A0D24BE341--><OBCQL_WIDGET_QUERY>
+<!--D635A982BE254889B05302A0D24BE341-->  <OBCQL_WIDGET_QUERY_ID><![CDATA[D635A982BE254889B05302A0D24BE341]]></OBCQL_WIDGET_QUERY_ID>
+<!--D635A982BE254889B05302A0D24BE341-->  <AD_CLIENT_ID><![CDATA[0]]></AD_CLIENT_ID>
+<!--D635A982BE254889B05302A0D24BE341-->  <AD_ORG_ID><![CDATA[0]]></AD_ORG_ID>
+<!--D635A982BE254889B05302A0D24BE341-->  <ISACTIVE><![CDATA[Y]]></ISACTIVE>
+<!--D635A982BE254889B05302A0D24BE341-->  <OBKMO_WIDGET_CLASS_ID><![CDATA[2919E9D9827942BCB432158FEF140467]]></OBKMO_WIDGET_CLASS_ID>
+<!--D635A982BE254889B05302A0D24BE341-->  <HQL><![CDATA[select e.opcrmCommercialname as customername,
+e.oPCRMAssignedTo.name as assignto,
+e.comments,
+(Select max(a.note) from OBUIAPP_Note a where a.record = e.id ) as note,
+(Select max(a.updatedBy.name) from OBUIAPP_Note a where a.record = e.id ) as noteupdatedby,
+e.opcrmInterest.interestname as interestname,
+e.opcrmRegion.name as region,
+e.opcrmCity as city,
+e.opcrmExpclosedate as closedate,
+e.opcrmSequencenumber as docno,
+e.id as recordid
+from ADUser e 
+left join e.opcrmRegion as region
+left join e.opcrmInterest int
+where e.opcrmIslead='Y'
+and e.updated >= current_date()-7
+and @optional_filters@
+order by e.creationDate asc]]></HQL>
+<!--D635A982BE254889B05302A0D24BE341-->  <TYPE><![CDATA[HQL]]></TYPE>
+<!--D635A982BE254889B05302A0D24BE341--></OBCQL_WIDGET_QUERY>
+
+</data>

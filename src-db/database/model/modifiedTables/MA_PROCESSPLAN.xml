@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+  <database name="MODIFIED TABLE MA_PROCESSPLAN">
+    <table name="MA_PROCESSPLAN" primaryKey="MA_PROCESSPLAN_KEY">
+      <column name="EM_GSR_PRODUCT_ID" primaryKey="false" required="false" type="VARCHAR" size="32" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <foreign-key foreignTable="M_PRODUCT" name="EM_GSR_PRODUCT_PL">
+        <reference local="EM_GSR_PRODUCT_ID" foreign="M_PRODUCT_ID"/>
+      </foreign-key>
+    </table>
+  </database>

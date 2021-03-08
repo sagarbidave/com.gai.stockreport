@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="GST Tax" printOrder="Horizontal" pageWidth="810" pageHeight="220" orientation="Landscape" columnWidth="810" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="13099253-1ed1-4b1f-9f13-a01b77c13f51">
+	<property name="ireport.scriptlethandling" value="0"/>
+	<property name="ireport.encoding" value="UTF-8"/>
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="net.sf.jasperreports.export.xls.detect.cell.type" value="true"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.util.*"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<style name="default" vAlign="Middle" fontName="Bitstream Vera Sans" fontSize="8"/>
+	<style name="Report_Title" fontName="Bitstream Vera Sans" fontSize="18"/>
+	<style name="Report_Subtitle" forecolor="#555555" fontName="Bitstream Vera Sans" fontSize="14"/>
+	<style name="Report_Data_Label" fontName="Bitstream Vera Sans" fontSize="11" isBold="true"/>
+	<style name="Report_Data_Field" fontName="Bitstream Vera Sans" fontSize="11" isBold="false"/>
+	<style name="Total_Field" mode="Opaque" forecolor="#000000" backcolor="#CCCCCC" vAlign="Middle" fontName="Bitstream Vera Sans" fontSize="11" isBold="true"/>
+	<style name="GroupHeader_DarkGray" mode="Opaque" forecolor="#FFFFFF" backcolor="#555555" vAlign="Middle" fontName="Bitstream Vera Sans" fontSize="12" isBold="true"/>
+	<style name="Group_Data_Label" fontName="Bitstream Vera Sans" fontSize="11" isBold="true"/>
+	<style name="Group_Data_Field" fontName="Bitstream Vera Sans" fontSize="11"/>
+	<style name="Detail_Header" mode="Opaque" forecolor="#FFFFFF" backcolor="#5D5D5D" vAlign="Middle" fontName="Bitstream Vera Sans" fontSize="10" isBold="true"/>
+	<style name="Detail_Line" fontName="Bitstream Vera Sans" fontSize="8">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[new Boolean($V{REPORT_COUNT}.intValue()%2==1)]]></conditionExpression>
+			<style mode="Opaque" backcolor="#CCCCCC"/>
+		</conditionalStyle>
+	</style>
+	<style name="Total_Gray" mode="Opaque" forecolor="#000000" backcolor="#CCCCCC"/>
+	<style name="Detail_Data_Label" mode="Opaque" backcolor="#CCCCCC" fontName="Bitstream Vera Sans" fontSize="10" isBold="true"/>
+	<style name="Detail_Data_Field" mode="Opaque" backcolor="#CCCCCC" fontName="Bitstream Vera Sans" fontSize="10"/>
+	<style name="Group_Footer" fontName="Bitstream Vera Sans" fontSize="11" isBold="true"/>
+	<style name="Report_Footer" isDefault="true" vAlign="Middle" fontName="Bitstream Vera Sans" fontSize="11"/>
+	<parameter name="DOCUMENT_ID" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="NUMBERFORMAT" class="java.text.DecimalFormat" isForPrompting="false"/>
+	<parameter name="LOCALE" class="java.util.Locale" isForPrompting="false"/>
+	<parameter name="BASE_DESIGN" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{BASE_DESIGN}+"/com/sakasham/rwsales/erpReports/"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[select distinct C_ORDER_ID,NAME_PRODUCT,QTYINVOICED,UOMNAME,VALUE,LINENETAMT,PRICEACTUAL,
+sum(CGSTAMT)as CGSTAMT,coalesce(sum(CGSTRATE),0) as CGSTRATE,
+sum(SGSTAMT)as SGSTAMT,coalesce(sum(SGSTRATE),0) as SGSTRATE,
+sum(IGSTAMT)as IGSTAMT,coalesce(sum(IGSTRATE),0) as IGSTRATE,
+case when name_product = 'Freight' then 1 else 2 end,to_number(discount) as discount,
+coalesce(sum(CGSTAMT),0)+coalesce(sum(SGSTAMT),0)+coalesce(sum(IGSTAMT),0) as total,
+(select to_number(sum(C_ORDERtax.TaxAmt)) as taxamnt from C_ORDERtax
+where C_ORDERtax.C_ORDER_id=$P{DOCUMENT_ID}) as totaltaxamount,
+amountword as amountword,qtytotal,grandtotal, ORG_SOCIALNAME
+from (
+SELECT Distinct C_ORDER.C_ORDER_ID,M_PRODUCT.NAME AS NAME_PRODUCT,sum(C_ORDERLINE.QTYINVOICED ) as QTYINVOICED,
+C_UOM.NAME AS UOMNAME,M_PRODUCT.VALUE AS VALUE,
+sum(C_ORDERLINE.LINENETAMT) AS LINENETAMT,
+C_ORDERLINE.PRICEACTUAL AS PRICEACTUAL,sum(C_ORDERLINE.Discount) as discount,
+case when tax.name LIKE ('%CGST%') and taxcategory.name ='INTRA STATE' then sum(taxline.taxamt) else NULL end as CGSTAMT,
+case when tax.name LIKE ('%CGST%') and taxcategory.name ='INTRA STATE' then tax.rate else NULL end as CGSTRATE,
+case when tax.name LIKE ('%SGST%') and taxcategory.name ='INTRA STATE' then sum(taxline.taxamt) else NULL end as SGSTAMT,
+case when tax.name LIKE ('%SGST%') and taxcategory.name ='INTRA STATE' then tax.rate else NULL end as SGSTRATE,
+case when taxcategory.name ='INTER STATE' then sum(taxline.taxamt) else NULL end as IGSTAMT,
+case when taxcategory.name ='INTER STATE' then tax.rate else NULL end as IGSTRATE,
+per_amount_to_words(C_ORDER.grandtotal) as amountword,
+C_ORDER.grandtotal as grandtotal,
+(select sum(l.QTYINVOICED)from C_ORDERLINE l,m_product p where p.m_product_id = l.m_product_id
+and l.linenetamt!=0 and l.C_ORDER_id = C_ORDERLINE.C_ORDER_ID and p.producttype = 'I'
+)as qtytotal,
+AD_ORG.SOCIAL_NAME AS ORG_SOCIALNAME
+FROM C_ORDERLINE
+left join M_PRODUCT on C_ORDERLINE.M_PRODUCT_ID = M_PRODUCT.M_PRODUCT_ID
+left join C_UOM on C_ORDERLINE.C_UOM_ID = C_UOM.C_UOM_ID
+
+left join C_ORDERLINEtax taxline on taxline.C_ORDERLINE_ID = C_ORDERLINE.C_ORDERLINE_ID
+left join C_ORDER on taxline.C_ORDER_ID = C_ORDER.C_ORDER_ID
+LEFT JOIN AD_ORG ON AD_ORG.AD_ORG_ID = C_ORDER.AD_ORG_ID
+LEFT JOIN C_ORDERtax cit on cit.C_ORDER_ID = C_ORDER.C_ORDER_ID
+,c_tax tax,C_TaxCategory taxcategory
+WHERE taxline.C_ORDERLINE_ID = C_ORDERLINE.C_ORDERLINE_ID
+and tax.c_tax_id = taxline.c_tax_id
+and tax.c_tax_id = cit.c_tax_id
+and taxcategory.C_TaxCategory_ID = tax.C_TaxCategory_ID
+AND C_ORDER.C_ORDER_ID =$P{DOCUMENT_ID}
+AND C_ORDER.ISSOTRX='Y'
+AND C_ORDERLINE.linenetamt!=0
+group by C_ORDER.C_ORDER_ID,M_PRODUCT.NAME,C_ORDERLINE.DESCRIPTION,C_UOM.NAME,M_PRODUCT.VALUE,
+C_ORDERLINE.PRICEACTUAL,C_ORDERLINE.PRICELIST,tax.name,tax.rate,taxcategory.name,C_ORDERLINE.C_ORDER_ID, ORG_SOCIALNAME
+)a
+group by C_ORDER_ID,NAME_PRODUCT,QTYINVOICED,UOMNAME,VALUE,LINENETAMT,PRICEACTUAL,discount,amountword,qtytotal,grandtotal, ORG_SOCIALNAME
+order by case when name_product = 'Freight' then 1 else 2 end desc]]>
+	</queryString>
+	<field name="c_order_id" class="java.lang.String"/>
+	<field name="name_product" class="java.lang.String"/>
+	<field name="qtyinvoiced" class="java.math.BigDecimal"/>
+	<field name="uomname" class="java.lang.String"/>
+	<field name="value" class="java.lang.String">
+		<fieldDescription><![CDATA[--OBTG:NVARCHAR--]]></fieldDescription>
+	</field>
+	<field name="linenetamt" class="java.math.BigDecimal"/>
+	<field name="priceactual" class="java.math.BigDecimal"/>
+	<field name="cgstamt" class="java.math.BigDecimal"/>
+	<field name="cgstrate" class="java.math.BigDecimal"/>
+	<field name="sgstamt" class="java.math.BigDecimal"/>
+	<field name="sgstrate" class="java.math.BigDecimal"/>
+	<field name="igstamt" class="java.math.BigDecimal"/>
+	<field name="igstrate" class="java.math.BigDecimal"/>
+	<field name="case" class="java.lang.Integer"/>
+	<field name="discount" class="java.math.BigDecimal"/>
+	<field name="total" class="java.math.BigDecimal"/>
+	<field name="totaltaxamount" class="java.math.BigDecimal"/>
+	<field name="amountword" class="java.lang.String"/>
+	<field name="qtytotal" class="java.math.BigDecimal"/>
+	<field name="grandtotal" class="java.math.BigDecimal"/>
+	<field name="org_socialname" class="java.lang.String"/>
+	<variable name="TOTAL_TAXAMT" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[]]></variableExpression>
+	</variable>
+	<variable name="TOTAL_LINENETAMT" class="java.math.BigDecimal" resetType="Group" resetGroup="C_INVOICE_ID" calculation="Sum">
+		<variableExpression><![CDATA[$F{linenetamt}]]></variableExpression>
+	</variable>
+	<variable name="TaxableAmt" class="java.math.BigDecimal">
+		<variableExpression><![CDATA[$F{linenetamt}.subtract($F{discount})]]></variableExpression>
+	</variable>
+	<variable name="CGST" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{cgstamt}]]></variableExpression>
+	</variable>
+	<variable name="SGST" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{sgstamt}]]></variableExpression>
+	</variable>
+	<variable name="IGST" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{igstamt}]]></variableExpression>
+	</variable>
+	<variable name="Total" class="java.math.BigDecimal">
+		<variableExpression><![CDATA[$F{total}]]></variableExpression>
+	</variable>
+	<variable name="TotalTaxableAmt" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{linenetamt}]]></variableExpression>
+	</variable>
+	<variable name="LineTotal" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{total}.add($F{linenetamt})]]></variableExpression>
+	</variable>
+	<variable name="TaxTotal" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{total}]]></variableExpression>
+	</variable>
+	<variable name="QtyTotal" class="java.math.BigDecimal">
+		<variableExpression><![CDATA[$F{qtytotal}]]></variableExpression>
+	</variable>
+	<group name="C_INVOICE_ID">
+		<groupExpression><![CDATA[]]></groupExpression>
+		<groupHeader>
+			<band splitType="Stretch"/>
+		</groupHeader>
+		<groupFooter>
+			<band splitType="Stretch"/>
+		</groupFooter>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band splitType="Stretch"/>
+	</title>
+	<pageHeader>
+		<band splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band splitType="Stretch"/>
+	</columnHeader>
+	<detail>
+		<band splitType="Stretch"/>
+	</detail>
+	<columnFooter>
+		<band splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band splitType="Stretch"/>
+	</pageFooter>
+	<summary>
+		<band height="180" splitType="Stretch">
+			<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true">
+				<reportElement key="textField" stretchType="RelativeToTallestObject" x="681" y="0" width="122" height="15" uuid="af5579ea-5172-4e92-82f1-6842ba49fbeb"/>
+				<box>
+					<pen lineWidth="0.5"/>
+					<topPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{TotalTaxableAmt}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToTallestObject" x="681" y="30" width="122" height="15" uuid="69cbb82a-8e20-49b2-9345-bb855181831c"/>
+				<box>
+					<pen lineWidth="0.5"/>
+					<topPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right">
+					<font fontName="SansSerif" size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{discount} != null ?  $F{totaltaxamount}.subtract($F{discount}) : $F{totaltaxamount}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="180" y="2" width="326" height="60" uuid="a689a0bc-e7a7-4704-854f-0b86ca9bb2c4"/>
+				<textElement verticalAlignment="Top">
+					<font size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{amountword}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement stretchType="RelativeToTallestObject" x="524" y="30" width="157" height="15" uuid="80ef1234-ae22-4307-8586-c87bdf2abae7"/>
+				<box>
+					<pen lineWidth="0.5"/>
+					<topPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[ Total Tax Amount]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToTallestObject" x="524" y="0" width="157" height="15" uuid="74b0f5a2-3d35-4dc9-a8df-bcf04630b613"/>
+				<box>
+					<pen lineWidth="0.5"/>
+					<topPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[ Total Amount Before Tax           ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement key="staticText-1" stretchType="RelativeToBandHeight" x="1" y="0" width="179" height="14" uuid="86469cf0-d5e6-4465-906b-ba320e7a1e90"/>
+				<box rightPadding="3"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Grand Total Amount In Words: ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement stretchType="RelativeToTallestObject" x="524" y="15" width="157" height="15" uuid="0fab69bf-ee99-4c10-b851-71a50caec26c"/>
+				<box>
+					<pen lineWidth="0.5"/>
+					<topPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[ Discount]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Transparent" x="17" y="77" width="113" height="53" uuid="10cf10aa-6fdd-4fdf-bda8-d69464cfd462"/>
+				<textElement textAlignment="Center" verticalAlignment="Bottom">
+					<font fontName="SansSerif" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Authorized Signatory]]></text>
+			</staticText>
+			<textField>
+				<reportElement stretchType="RelativeToBandHeight" isPrintRepeatedValues="false" x="4" y="62" width="247" height="15" uuid="d91d4f10-0e8c-4dbb-b51b-e5fac221daa1"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="9" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA["For, "+$F{org_socialname}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true">
+				<reportElement key="textField" stretchType="RelativeToTallestObject" x="681" y="45" width="122" height="15" uuid="395cb672-b4f7-45c9-b7a0-f83d565d1f47"/>
+				<box>
+					<pen lineWidth="0.5"/>
+					<topPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{TotalTaxableAmt}!=null ?$V{TotalTaxableAmt}.add($F{totaltaxamount}):$F{totaltaxamount}]]></textFieldExpression>
+			</textField>
+			<image hAlign="Center" onErrorType="Blank">
+				<reportElement x="32" y="77" width="77" height="36" uuid="a6b61bd5-30a0-4617-bbfb-e4b543a63f00"/>
+				<imageExpression><![CDATA["/opt/Babli-sign.png"]]></imageExpression>
+			</image>
+			<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToTallestObject" x="681" y="15" width="122" height="15" uuid="bf2c811a-8383-4930-999c-25d3b53f8b51"/>
+				<box>
+					<pen lineWidth="0.5"/>
+					<topPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right">
+					<font fontName="SansSerif" size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{discount}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement stretchType="RelativeToTallestObject" x="524" y="45" width="157" height="15" uuid="5b1873fa-2e12-43fc-b371-25decdcdbbcc"/>
+				<box>
+					<pen lineWidth="0.5"/>
+					<topPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[ Grand Total Amount (INR)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="703" y="110" width="100" height="20" uuid="14b6e09c-ec0c-46eb-899a-edca0acbf4aa"/>
+				<textElement textAlignment="Center">
+					<font isBold="false"/>
+				</textElement>
+				<text><![CDATA[Page 1 of 2]]></text>
+			</staticText>
+		</band>
+	</summary>
+</jasperReport>

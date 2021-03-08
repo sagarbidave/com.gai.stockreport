@@ -1,0 +1,765 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="StockOutReport" pageWidth="850" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="810" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" isFloatColumnFooter="true" uuid="0984593f-dba9-426a-9b72-6e54525b3c97">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="net.sf.jasperreports.awt.ignore.missing.font" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.detect.cell.type" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.exclude.origin.keep.first.band.1" value="columnHeader"/>
+	<property name="net.sf.jasperreports.export.xls.ignore.graphics" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.white.page.background" value="false"/>
+	<property name="net.sf.jasperreports.export.xls.one.page.per.sheet" value="false"/>
+	<property name="net.sf.jasperreports.export.ignore.page.margins" value="true"/>
+	<style name="style1">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$F{qtyin}.compareTo(BigDecimal.ZERO)>0]]></conditionExpression>
+			<style forecolor="#0000FF"/>
+		</conditionalStyle>
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$F{qtyout}.compareTo(BigDecimal.ZERO)>0]]></conditionExpression>
+			<style forecolor="#FF0000"/>
+		</conditionalStyle>
+	</style>
+	<parameter name="AD_Org_ID" class="java.lang.String">
+		<defaultValueExpression><![CDATA["0"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="M_Warehouse_ID" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="M_Locator_ID" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="first_date" class="java.util.Date">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="end_date" class="java.util.Date">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="Product_Value1" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["0"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="Product_Value2" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["0"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="ProductID1" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["0"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="ProductID2" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["0"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="FParam" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["S"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="QParam" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{FParam}.equals( "S" ) ?
+    " AND M_PRODUCT.VALUE BETWEEN GAI_GET_PRODUCTVALUE('"+$P{ProductID1}+"') AND GAI_GET_PRODUCTVALUE('"+$P{ProductID2}+"') "
+    /*" AND M_PRODUCT.VALUE BETWEEN NVL(GAI_GET_PRODUCTVALUE("+$P{ProductID1}+"), M_PRODUCT.VALUE) AND NVL(GAI_GET_PRODUCTVALUE("+$P{ProductID2}+"), M_PRODUCT.VALUE) "*/
+    : " AND M_PRODUCT.VALUE BETWEEN (SELECT MIN(MP.VALUE) FROM M_PRODUCT MP WHERE MP.VALUE LIKE UPPER('"+$P{Product_Value1}+"'||'%') AND MP.VALUE = M_PRODUCT.VALUE) AND (SELECT MAX(MP.VALUE) FROM M_PRODUCT MP WHERE MP.VALUE LIKE UPPER('"+$P{Product_Value2}+"'||'%') AND MP.VALUE = M_PRODUCT.VALUE) "
+    /*: " AND 1=1 "*/]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT
+M_PRODUCT.VALUE AS PRODUCT_VALUE,
+MP.VALUE AS VALUE_BOM,
+M_PRODUCT.NAME AS PRODUCT_NAME,
+MP.NAME AS NAMA_BOM,
+M_TRANSACTION.MOVEMENTDATE AS MOVEMENTDATE,
+M_WAREHOUSE.NAME AS WAREHOUSE_NAME,
+C_UOM.UOMSYMBOL AS UOM_NAME,
+M_TRANSACTION.MOVEMENTTYPE AS MOVEMENTTYPE,
+M_LOCATOR.VALUE AS STORAGEBIN_VALUE,
+m_transaction.m_transaction_id as trxid,
+
+(CASE WHEN M_TRANSACTION.MOVEMENTQTY > 0 THEN M_TRANSACTION.MOVEMENTQTY ELSE 0 END) AS QTYIN,
+abs(CASE WHEN M_TRANSACTION.MOVEMENTQTY < 0 THEN M_TRANSACTION.MOVEMENTQTY ELSE 0 END) AS QTYOUT,
+
+M_INVENTORY.NAME AS DOC_NO_INV,
+coalesce(coalesce(coalesce(M_INOUT.DOCUMENTNO,M_MOVEMENT.DOCUMENTNO),O.DOCUMENTNO), mm.documentno) AS DOC_NO,
+O.DOCUMENTNO AS NOSO,
+coalesce(
+COALESCE(coalesce(mm.description,m_movement.description),
+P.NAME),
+c_bpartner.name) as ketnama,
+
+coalesce(coalesce(coalesce(coalesce(coalesce(mml.description,mm.name),m_movement.name),m_movementline.description),m_inventoryline.description),c_order.documentno) as ket,
+m_locator.value as gdg,
+coalesce((SELECT SUM(MT.MOVEMENTQTY)
+    FROM M_TRANSACTION MT, M_PRODUCT MP
+    WHERE
+    MT.MOVEMENTDATE < $P{first_date}
+    AND MP.M_PRODUCT_ID = MT.M_PRODUCT_ID
+    and MT.M_LOCATOR_ID = M_Transaction.m_locator_id
+    and MT.M_PRODUCT_ID = M_PRODUCT.M_PRODUCT_ID), 0) AS LASTQTY
+FROM M_WAREHOUSE LEFT JOIN M_LOCATOR ON (M_WAREHOUSE.M_WAREHOUSE_ID = M_LOCATOR.M_WAREHOUSE_ID)
+LEFT JOIN M_TRANSACTION ON (M_TRANSACTION.M_LOCATOR_ID = M_LOCATOR.M_LOCATOR_ID)
+LEFT JOIN M_PRODUCT ON (M_TRANSACTION.M_PRODUCT_ID = M_PRODUCT.M_PRODUCT_ID)
+LEFT JOIN M_PRODUCT_CATEGORY ON (M_PRODUCT_CATEGORY.M_PRODUCT_CATEGORY_ID = M_PRODUCT.M_PRODUCT_CATEGORY_ID)
+LEFT JOIN M_INOUTLINE ON (M_TRANSACTION.M_INOUTLINE_ID = M_INOUTLINE.M_INOUTLINE_ID
+AND M_LOCATOR.M_LOCATOR_ID = M_INOUTLINE.M_LOCATOR_ID AND M_INOUTLINE.M_PRODUCT_ID = M_PRODUCT.M_PRODUCT_ID)
+LEFT JOIN M_INOUT ON (M_INOUT.M_INOUT_ID = M_INOUTLINE.M_INOUT_ID)
+left join c_order on (m_inout.c_order_id = c_order.c_order_id)
+left join c_bpartner on (m_inout.c_bpartner_id = c_bpartner.c_bpartner_id)
+LEFT JOIN M_MOVEMENTLINE ON (M_TRANSACTION.M_MOVEMENTLINE_ID = M_MOVEMENTLINE.M_MOVEMENTLINE_ID
+AND M_LOCATOR.M_LOCATOR_ID = M_MOVEMENTLINE.M_LOCATOR_ID
+AND M_MOVEMENTLINE.M_PRODUCT_ID = M_PRODUCT.M_PRODUCT_ID)
+LEFT JOIN M_MOVEMENT ON (M_MOVEMENT.M_MOVEMENT_ID = M_MOVEMENTLINE.M_MOVEMENT_ID)
+LEFT JOIN M_MOVEMENTLINE mml ON (M_TRANSACTION.M_MOVEMENTLINE_ID = mml.M_MOVEMENTLINE_ID
+AND M_LOCATOR.M_LOCATOR_ID = mml.M_LOCATORTO_ID
+AND mml.M_PRODUCT_ID = M_PRODUCT.M_PRODUCT_ID)
+LEFT JOIN M_MOVEMENT mm ON (mm.M_MOVEMENT_ID = mml.M_MOVEMENT_ID)
+LEFT JOIN M_PRODUCTIONLINE ON (M_TRANSACTION.M_PRODUCTIONLINE_ID = M_PRODUCTIONLINE.M_PRODUCTIONLINE_ID
+AND M_PRODUCTIONLINE.M_LOCATOR_ID = M_PRODUCTIONLINE.M_LOCATOR_ID AND M_PRODUCTIONLINE.M_PRODUCT_ID = M_PRODUCT.M_PRODUCT_ID)
+LEFT JOIN M_PRODUCT MP ON (MP.M_PRODUCT_ID = M_PRODUCTIONLINE.M_PRODUCT_ID)
+LEFT JOIN M_PRODUCTIONPLAN ON (M_PRODUCTIONLINE.M_PRODUCTIONPLAN_ID = M_PRODUCTIONPLAN.M_PRODUCTIONPLAN_ID)
+LEFT JOIN M_PRODUCTION ON (M_PRODUCTIONPLAN.M_PRODUCTION_ID = M_PRODUCTION.M_PRODUCTION_ID)
+LEFT JOIN C_ORDER O ON (O.C_ORDER_ID = M_PRODUCTION.EM_GBO_ORDER_ID)
+LEFT JOIN C_BPARTNER P ON (P.C_BPARTNER_ID = O.C_BPARTNER_ID)
+LEFT JOIN M_INVENTORYLINE ON (M_TRANSACTION.M_INVENTORYLINE_ID = M_INVENTORYLINE.M_INVENTORYLINE_ID
+AND M_LOCATOR.M_LOCATOR_ID = M_INVENTORYLINE.M_LOCATOR_ID AND M_INVENTORYLINE.M_PRODUCT_ID = M_PRODUCT.M_PRODUCT_ID)
+LEFT JOIN M_INVENTORY ON (M_WAREHOUSE.M_WAREHOUSE_ID = M_INVENTORY.M_WAREHOUSE_ID AND M_INVENTORY.M_INVENTORY_ID = M_INVENTORYLINE.M_INVENTORY_ID)
+LEFT JOIN C_UOM ON M_TRANSACTION.C_UOM_ID = C_UOM.C_UOM_ID, AD_ORG AO,
+AD_ORG_WAREHOUSE OW
+WHERE M_WAREHOUSE.M_WAREHOUSE_ID = coalesce($P{M_Warehouse_ID},M_WAREHOUSE.M_WAREHOUSE_ID)
+AND M_LOCATOR.M_LOCATOR_ID = (Case When $P{M_Locator_ID}=null or $P{M_Locator_ID}='' Then M_LOCATOR.M_LOCATOR_ID Else $P{M_Locator_ID} End)
+AND M_TRANSACTION.MOVEMENTDATE between coalesce($P{first_date}, M_TRANSACTION.MOVEMENTDATE) and coalesce($P{end_date}, M_TRANSACTION.MOVEMENTDATE)
+AND M_WAREHOUSE.AD_ORG_ID = M_LOCATOR.AD_ORG_ID
+AND M_PRODUCT.ISACTIVE='Y'
+AND M_PRODUCT_CATEGORY.VALUE != 'Jasa'
+AND OW.M_WAREHOUSE_ID = M_WAREHOUSE.M_WAREHOUSE_ID
+AND OW.AD_ORG_ID IN ($P{AD_Org_ID})
+GROUP BY M_PRODUCT.NAME, M_TRANSACTION.MOVEMENTDATE, M_PRODUCT.VALUE, M_WAREHOUSE.NAME, C_UOM.UOMSYMBOL, M_TRANSACTION.MOVEMENTQTY,
+M_TRANSACTION.MOVEMENTTYPE, M_LOCATOR.VALUE, M_INOUT.DOCUMENTNO, M_MOVEMENT.DOCUMENTNO, M_INVENTORY.NAME, M_PRODUCTION.DOCUMENTNO, M_TRANSACTION.CREATED, M_PRODUCT.M_PRODUCT_ID,mm.documentno, M_Transaction.m_locator_id, m_movement.name, mml.description,mm.name,M_PRODUCTION.name,m_transaction.m_transaction_id, c_order.documentno, M_INOUT.DOCSTATUS,
+mm.description,m_movement.description,m_inventoryline.description,m_movementline.description, c_bpartner.name,
+O.DOCUMENTNO, P.NAME,
+MP.VALUE, MP.NAME
+ORDER BY PRODUCT_VALUE, MOVEMENTDATE ASC]]>
+	</queryString>
+	<field name="product_value" class="java.lang.String"/>
+	<field name="value_bom" class="java.lang.String"/>
+	<field name="product_name" class="java.lang.String"/>
+	<field name="nama_bom" class="java.lang.String"/>
+	<field name="movementdate" class="java.sql.Timestamp"/>
+	<field name="warehouse_name" class="java.lang.String"/>
+	<field name="uom_name" class="java.lang.String"/>
+	<field name="movementtype" class="java.lang.String"/>
+	<field name="storagebin_value" class="java.lang.String"/>
+	<field name="trxid" class="java.lang.String"/>
+	<field name="qtyin" class="java.math.BigDecimal"/>
+	<field name="qtyout" class="java.math.BigDecimal"/>
+	<field name="doc_no_inv" class="java.lang.String"/>
+	<field name="doc_no" class="java.lang.String"/>
+	<field name="noso" class="java.lang.String"/>
+	<field name="ketnama" class="java.lang.String"/>
+	<field name="ket" class="java.lang.String"/>
+	<field name="gdg" class="java.lang.String"/>
+	<field name="lastqty" class="java.math.BigDecimal"/>
+	<variable name="SALDO" class="java.math.BigDecimal" resetType="Group" resetGroup="Product Value" incrementType="Report" calculation="Sum">
+		<variableExpression><![CDATA[$V{SALDO}.add(($F{qtyin}).subtract($F{qtyout}))]]></variableExpression>
+		<initialValueExpression><![CDATA[$F{lastqty}]]></initialValueExpression>
+	</variable>
+	<variable name="MOVEMENT_TYPE" class="java.lang.String">
+		<variableExpression><![CDATA[( $F{movementtype}.equals("C-")? "Customer Shipment" :
+    ( $F{movementtype}.equals("C+") ? "Customer Returns" :
+        ( $F{movementtype}.equals("V+") ? "Vendor Receipts" :
+          ( $F{movementtype}.equals("V-") ? "Vendor Returns" :
+              ( $F{movementtype}.equals("I+") ? "Inventory In" :
+                  ( $F{movementtype}.equals("I-") ? "Inventory Out" :
+                      ( $F{movementtype}.equals("D+") ? "Internal Consumption +" :
+                          ( $F{movementtype}.equals("D-") ? "Internal Consumption -" :
+                              ( $F{movementtype}.equals("P+") ? "Production +" :
+                                  ( $F{movementtype}.equals("P-") ? "Production -" :
+                                      ( $F{movementtype}.equals("W+") ? "Work Order +" : "Work Order -" )))))))))))]]></variableExpression>
+		<initialValueExpression><![CDATA[$F{movementtype}]]></initialValueExpression>
+	</variable>
+	<variable name="TOTAL_IN" class="java.math.BigDecimal" resetType="Group" resetGroup="Product Value" calculation="Sum">
+		<variableExpression><![CDATA[$F{qtyin}]]></variableExpression>
+		<initialValueExpression><![CDATA[]]></initialValueExpression>
+	</variable>
+	<variable name="TOTAL_OUT" class="java.math.BigDecimal" resetType="Group" resetGroup="Product Value" calculation="Sum">
+		<variableExpression><![CDATA[$F{qtyout}]]></variableExpression>
+	</variable>
+	<variable name="TOTAL_SALDO" class="java.math.BigDecimal" resetType="Group" resetGroup="Product Value" calculation="Sum">
+		<variableExpression><![CDATA[$V{SALDO}]]></variableExpression>
+	</variable>
+	<variable name="DOC_NO" class="java.lang.String">
+		<variableExpression><![CDATA[($F{doc_no}==null ? $F{doc_no_inv} : $F{doc_no} )]]></variableExpression>
+		<initialValueExpression><![CDATA[( $F{doc_no}.equals( null)? $F{doc_no_inv} : $F{doc_no} )]]></initialValueExpression>
+	</variable>
+	<group name="Product Value">
+		<groupExpression><![CDATA[$F{product_value}]]></groupExpression>
+		<groupHeader>
+			<band height="50">
+				<staticText>
+					<reportElement x="0" y="19" width="63" height="15" uuid="8707c195-d16b-4cbd-bcab-21546f3715f2"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="DejaVu Sans" size="8" isBold="true"/>
+					</textElement>
+					<text><![CDATA[DATE]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="140" y="19" width="148" height="15" uuid="9438269f-ce49-427f-b57f-b79202847c90"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="DejaVu Sans" size="8" isBold="true"/>
+					</textElement>
+					<text><![CDATA[DESCRIPTION]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="386" y="19" width="73" height="15" uuid="cfa13f70-6c55-43f2-9cbd-9585e30a2b7d"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font size="8" isBold="true"/>
+					</textElement>
+					<text><![CDATA[QTY IN]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="459" y="19" width="71" height="15" uuid="a62b042f-a932-4b4f-8d93-31c288fd1ccb"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font size="8" isBold="true"/>
+					</textElement>
+					<text><![CDATA[QTY OUT]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="530" y="19" width="103" height="15" uuid="29c9eabd-6ef8-45d3-8cc4-5f3aa37efd44"/>
+					<box rightPadding="3">
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font size="8" isBold="true"/>
+					</textElement>
+					<text><![CDATA[BALANCE]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true" pattern="#,##0.000" isBlankWhenNull="true">
+					<reportElement stretchType="RelativeToTallestObject" mode="Opaque" x="530" y="34" width="78" height="16" isPrintWhenDetailOverflows="true" forecolor="#019801" uuid="276b22f9-88ac-44cf-bcfe-1dac354af36d"/>
+					<box>
+						<pen lineColor="#019801"/>
+						<topPen lineWidth="0.5" lineColor="#010101"/>
+						<leftPen lineColor="#019801"/>
+						<bottomPen lineWidth="0.5" lineColor="#010101"/>
+						<rightPen lineColor="#019801"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="DejaVu Sans" size="8" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{lastqty}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement stretchType="RelativeToTallestObject" x="140" y="34" width="246" height="16" isPrintWhenDetailOverflows="true" uuid="b5297678-1031-41db-9009-e089a3521882"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="DejaVu Sans" size="8" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{product_value}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement stretchType="RelativeToTallestObject" x="608" y="34" width="25" height="16" isPrintWhenDetailOverflows="true" uuid="8f46a52e-9089-49a0-9da0-d1f10bf568ef"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="DejaVu Sans" size="8"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{uom_name}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="288" y="19" width="98" height="15" uuid="aeede3d7-2790-4983-a053-b430079947f1"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font size="8" isBold="true"/>
+					</textElement>
+					<text><![CDATA[BIN]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="633" y="19" width="177" height="15" uuid="4249c2bd-4927-4498-b7ff-296e19e3efeb"/>
+					<box leftPadding="2">
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font size="8" isBold="true"/>
+					</textElement>
+					<text><![CDATA[PRODUCT NAME]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="63" y="19" width="77" height="15" uuid="362da0f8-a081-4617-ab9f-7dc36edfa066"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="DejaVu Sans" size="8" isBold="true"/>
+					</textElement>
+					<text><![CDATA[DOC. No]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="0" y="34" width="140" height="16" uuid="601f82eb-e4ad-4b9d-959a-a65699a4e05d"/>
+					<box>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Middle" markup="none">
+						<font fontName="DejaVu Sans" size="8" isBold="true"/>
+					</textElement>
+					<text><![CDATA[ITEM CODE :]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="0" y="0" width="63" height="19" uuid="7921e0aa-f7d1-4aa4-81b7-90b8b6148015"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+						<font fontName="DejaVu Sans" size="8"/>
+					</textElement>
+					<text><![CDATA[]]></text>
+				</staticText>
+				<staticText>
+					<reportElement stretchType="RelativeToTallestObject" x="386" y="34" width="144" height="16" isPrintWhenDetailOverflows="true" uuid="7bcdbbf6-ea53-4115-80f5-d5430c54cc04"/>
+					<box>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Middle" markup="none">
+						<font fontName="DejaVu Sans" size="8" isBold="true"/>
+					</textElement>
+					<text><![CDATA[]]></text>
+				</staticText>
+				<staticText>
+					<reportElement stretchType="RelativeToTallestObject" x="633" y="34" width="177" height="16" isPrintWhenDetailOverflows="true" uuid="c1feb8fe-1320-4956-81ca-7b8614a383f4"/>
+					<box>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Middle" markup="none">
+						<font fontName="DejaVu Sans" size="8" isBold="true"/>
+					</textElement>
+					<text><![CDATA[]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="63" y="0" width="77" height="19" uuid="0c0e08ce-8f93-4b9a-ae26-65c9a9540d21"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+						<font fontName="DejaVu Sans" size="8"/>
+					</textElement>
+					<text><![CDATA[]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="140" y="0" width="148" height="19" uuid="ba1e48ab-f19c-470e-9d44-7a36eeeb2200"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+						<font fontName="DejaVu Sans" size="8"/>
+					</textElement>
+					<text><![CDATA[]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="288" y="0" width="98" height="19" uuid="4ff0b32c-cea6-4d89-90b2-3170eb23b006"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+						<font fontName="DejaVu Sans" size="8"/>
+					</textElement>
+					<text><![CDATA[]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="459" y="0" width="71" height="19" uuid="14228eb7-b44b-4219-88bb-b493694a7346"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+						<font fontName="DejaVu Sans" size="8"/>
+					</textElement>
+					<text><![CDATA[]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="386" y="0" width="73" height="19" uuid="076b248f-5240-4e05-bda6-c95ac2aafa80"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+						<font fontName="DejaVu Sans" size="8"/>
+					</textElement>
+					<text><![CDATA[]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="530" y="0" width="103" height="19" uuid="75b7f3f5-85da-4996-933a-b150e19a5a45"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+						<font fontName="DejaVu Sans" size="8"/>
+					</textElement>
+					<text><![CDATA[]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="633" y="0" width="177" height="19" uuid="752d7c02-ac45-4828-842e-02c10d17cef8"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+						<font fontName="DejaVu Sans" size="8"/>
+					</textElement>
+					<text><![CDATA[]]></text>
+				</staticText>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="16">
+				<textField isStretchWithOverflow="true" pattern="#,##0.000" isBlankWhenNull="true">
+					<reportElement stretchType="RelativeToTallestObject" x="386" y="0" width="58" height="16" isRemoveLineWhenBlank="true" isPrintWhenDetailOverflows="true" uuid="a20f89d1-ae04-425f-ae1d-864928b841b6"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="DejaVu Sans" size="8" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{TOTAL_IN}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="#,##0.000" isBlankWhenNull="true">
+					<reportElement stretchType="RelativeToTallestObject" x="530" y="0" width="78" height="16" isRemoveLineWhenBlank="true" isPrintWhenDetailOverflows="true" uuid="aa3084a6-f954-4b9f-8f0d-aedf9820dfb2"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="DejaVu Sans" size="8" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{SALDO}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="#,##0.000" isBlankWhenNull="true">
+					<reportElement stretchType="RelativeToTallestObject" x="459" y="0" width="55" height="16" isRemoveLineWhenBlank="true" isPrintWhenDetailOverflows="true" uuid="0a1250e0-374d-47cf-b031-f2fccf7a5274"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="DejaVu Sans" size="8" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{TOTAL_OUT}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement stretchType="RelativeToTallestObject" x="608" y="0" width="25" height="16" isRemoveLineWhenBlank="true" isPrintWhenDetailOverflows="true" uuid="a44518b7-2f4c-4aa5-ab7f-897956c340fa"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+						<font fontName="DejaVu Sans" size="8"/>
+					</textElement>
+					<text><![CDATA[]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement stretchType="RelativeToTallestObject" x="140" y="0" width="148" height="16" isRemoveLineWhenBlank="true" isPrintWhenDetailOverflows="true" uuid="9926862e-44df-4b69-957d-ab2f314d7944"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement verticalAlignment="Middle">
+						<font fontName="DejaVu Sans" size="8"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{product_name}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement stretchType="RelativeToTallestObject" x="0" y="0" width="140" height="16" isRemoveLineWhenBlank="true" isPrintWhenDetailOverflows="true" uuid="3413b0df-c0ad-4bcc-842b-a4cd05190b1c"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="DejaVu Sans" size="8"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{product_value}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement stretchType="RelativeToTallestObject" x="444" y="0" width="15" height="16" isPrintWhenDetailOverflows="true" uuid="93870c7c-f510-4d78-9d54-de3a461a64b5"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="DejaVu Sans" size="8"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{uom_name}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement stretchType="RelativeToTallestObject" x="514" y="0" width="16" height="16" isPrintWhenDetailOverflows="true" uuid="88865e77-f1d0-4ed3-82b2-9c8ab000eb1e"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="DejaVu Sans" size="8"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{uom_name}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement stretchType="RelativeToTallestObject" x="288" y="0" width="98" height="16" isPrintWhenDetailOverflows="true" uuid="af1a2cdf-2717-4f18-a0e7-5312a77e97ee"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+						<font fontName="DejaVu Sans" size="8"/>
+					</textElement>
+					<text><![CDATA[]]></text>
+				</staticText>
+				<staticText>
+					<reportElement stretchType="RelativeToTallestObject" x="633" y="0" width="177" height="16" isPrintWhenDetailOverflows="true" uuid="88e7b222-7b94-4cc6-9568-50cb597b67ca"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+						<font fontName="DejaVu Sans" size="8"/>
+					</textElement>
+					<text><![CDATA[]]></text>
+				</staticText>
+			</band>
+		</groupFooter>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="34" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="0" width="386" height="34" uuid="133dc1c1-323b-49e3-9830-d8c30e36c9b8"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[STOCK OUT REPORT]]></text>
+			</staticText>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="37" splitType="Stretch">
+			<textField isBlankWhenNull="true">
+				<reportElement x="459" y="17" width="351" height="20" uuid="99253453-63c2-4db2-85ba-82dec0ddfd59"/>
+				<textFieldExpression><![CDATA[$P{M_Locator_ID}.equals("") || $P{M_Locator_ID}==null?"":$F{storagebin_value}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="0" width="63" height="17" uuid="a361ba0c-b9a2-4edf-a2f9-419f521a0d15"/>
+				<textElement>
+					<font fontName="DejaVu Sans"/>
+				</textElement>
+				<text><![CDATA[Period :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="386" y="17" width="73" height="20" uuid="35207962-01d7-416b-a941-9950a7d7b7ce"/>
+				<textElement>
+					<font fontName="DejaVu Sans"/>
+				</textElement>
+				<text><![CDATA[Storage Bin:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="17" width="63" height="20" uuid="5c79d0da-e424-4d53-b8d4-ca35ed60b9e4"/>
+				<textElement>
+					<font fontName="DejaVu Sans"/>
+				</textElement>
+				<text><![CDATA[Warehouse :]]></text>
+			</staticText>
+			<textField pattern="dd-MM-yyyy" isBlankWhenNull="true">
+				<reportElement x="63" y="0" width="323" height="17" uuid="17dc30e6-3f11-4550-bb79-36ab1cfbfff6"/>
+				<textFieldExpression><![CDATA[($P{first_date}==null?"":new SimpleDateFormat("dd MMM yy").format($P{first_date}))
++" TO "+
+($P{end_date}==null?"":new SimpleDateFormat("dd MMM yy").format($P{end_date}))]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="63" y="17" width="323" height="20" uuid="fc70a6a7-833b-43be-a97d-ff34a23d81c8"/>
+				<textFieldExpression><![CDATA[$F{warehouse_name}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band splitType="Stretch"/>
+	</columnHeader>
+	<detail>
+		<band height="15" splitType="Stretch">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToTallestObject" x="633" y="0" width="177" height="15" isPrintWhenDetailOverflows="true" uuid="efdf2866-f4d2-4ba4-a848-aea1008f6412"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{product_name}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="#,##0.000" isBlankWhenNull="true">
+				<reportElement style="style1" stretchType="RelativeToTallestObject" x="386" y="0" width="58" height="15" isPrintWhenDetailOverflows="true" uuid="1efa9c14-06b4-4709-913a-f00c83523dda">
+					<printWhenExpression><![CDATA[$F{movementdate}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qtyin}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="#,##0.000" isBlankWhenNull="true">
+				<reportElement style="style1" stretchType="RelativeToTallestObject" x="459" y="0" width="55" height="15" isPrintWhenDetailOverflows="true" uuid="57b05f10-fc86-4e0c-8baa-0a023554d6fc">
+					<printWhenExpression><![CDATA[$F{movementdate}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qtyout}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="#,##0.000" isBlankWhenNull="true">
+				<reportElement style="style1" stretchType="RelativeToTallestObject" x="530" y="0" width="78" height="15" isPrintWhenDetailOverflows="true" uuid="1fee3226-2005-417b-a52d-2b205b5e3f29">
+					<printWhenExpression><![CDATA[$F{movementdate}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{SALDO}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToTallestObject" x="63" y="0" width="77" height="15" isPrintWhenDetailOverflows="true" uuid="7914912d-b3bb-4568-bf56-b7d7173dc2b5">
+					<printWhenExpression><![CDATA[$F{movementdate}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{DOC_NO}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="style1" stretchType="RelativeToTallestObject" x="514" y="0" width="16" height="15" isPrintWhenDetailOverflows="true" uuid="e6370774-8b2c-407d-a33a-a04f9455ea69">
+					<printWhenExpression><![CDATA[$F{movementdate}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{uom_name}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="style1" stretchType="RelativeToTallestObject" x="444" y="0" width="15" height="15" isPrintWhenDetailOverflows="true" uuid="e09d9965-c771-4112-a017-adaeb557af63">
+					<printWhenExpression><![CDATA[$F{movementdate}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{uom_name}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToTallestObject" x="140" y="0" width="148" height="15" isPrintWhenDetailOverflows="true" uuid="180d7ad0-1525-428f-9898-300884becd68">
+					<printWhenExpression><![CDATA[$F{movementdate}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ketnama}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToTallestObject" x="288" y="0" width="98" height="15" isPrintWhenDetailOverflows="true" uuid="09c4a9d0-dd3e-45e0-94ad-2b8484796fb1">
+					<printWhenExpression><![CDATA[$F{movementdate}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{gdg}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="dd-MMM-yy" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToTallestObject" isPrintRepeatedValues="false" x="0" y="0" width="63" height="15" isPrintWhenDetailOverflows="true" uuid="dd5a6768-2aaf-4157-9137-c8b7b98359d1">
+					<printWhenExpression><![CDATA[$F{movementdate}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{movementdate}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="style1" stretchType="RelativeToTallestObject" x="608" y="0" width="25" height="15" isPrintWhenDetailOverflows="true" uuid="fe1ec1f9-831c-4f9f-8a62-e7ac0f4dbca8">
+					<printWhenExpression><![CDATA[$F{movementdate}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{uom_name}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="19" splitType="Stretch">
+			<textField evaluationTime="Report" pattern="" isBlankWhenNull="false">
+				<reportElement key="textField-9" x="608" y="0" width="25" height="19" forecolor="#000000" backcolor="#FFFFFF" uuid="9ecba10f-ad37-413a-8c79-87b171e96b8e"/>
+				<box>
+					<topPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None">
+					<font fontName="DejaVu Sans" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="CP1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA["" + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement key="textField-10" x="530" y="0" width="78" height="19" uuid="b5137c65-cb00-4769-bb23-61d0c14304d4"/>
+				<box>
+					<topPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER} + " Of "]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="63" y="0" width="77" height="19" uuid="b45cb894-728d-4dca-bbac-8c5b73f96536"/>
+				<box>
+					<topPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[new Date()]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="140" y="0" width="304" height="19" uuid="c32bb96f-72ca-4bb6-a14d-1a03aa36aff3"/>
+				<box>
+					<topPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+					<font fontName="DejaVu Sans" size="8"/>
+				</textElement>
+				<text><![CDATA[]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="633" y="0" width="177" height="19" uuid="abd219a4-0aaf-4171-b2fe-3a810e904d01"/>
+				<box>
+					<topPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+					<font fontName="DejaVu Sans" size="8"/>
+				</textElement>
+				<text><![CDATA[]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="0" width="63" height="19" uuid="0ddd136f-1f61-4edb-bf8c-5bbbf9ef0b40"/>
+				<box>
+					<topPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle" markup="none">
+					<font fontName="DejaVu Sans" size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Print Date :]]></text>
+			</staticText>
+		</band>
+	</pageFooter>
+</jasperReport>

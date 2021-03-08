@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION GSR_UNITS_TO_WORDS">
+    <function name="GSR_UNITS_TO_WORDS" type="VARCHAR">
+      <parameter name="p_numericvalue" type="NUMERIC" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[result_str character varying(20);
+result_str2 character varying(20);
+v_strtemp character varying(20);
+v_temp NUMBER;
+  BEGIN
+
+	SELECT INTO result_str
+		CASE $1
+		WHEN 0 THEN ''
+		WHEN 1 THEN 'ONE '
+		WHEN 2 THEN 'TWO '
+		WHEN 3 THEN 'THREE '
+		WHEN 4 THEN 'FOUR '
+		WHEN 5 THEN 'FIVE '
+		WHEN 6 THEN 'SIX '
+		WHEN 7 THEN 'SEVEN '
+		WHEN 8 THEN 'EIGHT '
+		WHEN 9 THEN 'NINE '
+		WHEN 10 THEN 'TEN '
+		WHEN 11 THEN 'ELEVEN '
+		WHEN 12 THEN 'TWELVE '
+		WHEN 13 THEN 'THIRTEEN '
+		WHEN 14 THEN 'FOURTEEN '
+		WHEN 15 THEN 'FIFTEEN '
+		WHEN 16 THEN 'SIXTEEN '
+		WHEN 17 THEN 'SEVENTEEN '
+		WHEN 18 THEN 'EIGHTEEN '
+		WHEN 19 THEN 'NINETEEN '
+
+		END;
+
+if $1 >= 20 then
+raise notice '%','get it';
+ 
+v_temp = $1/10 ;
+ v_temp =  floor(v_temp) ;
+
+ SELECT INTO result_str2
+CASE v_temp 
+WHEN 0 THEN ''
+WHEN 1 THEN ''
+WHEN 2 THEN 'TWENTY '
+WHEN 3 THEN 'THIRTY '
+WHEN 4 THEN 'FORTY '
+WHEN 5 THEN 'FIFTY '
+WHEN 6 THEN 'SIXTY '
+WHEN 7 THEN 'SEVENTY '
+WHEN 8 THEN 'EIGHTY '
+WHEN 9 THEN 'NINETY '
+END ;
+ 
+
+      v_temp = $1%10 ;
+      
+      result_str2 = result_str2 || gsr_units_to_words(v_temp);
+result_str = result_str2 ;
+        END IF ;
+        raise notice '%','now put notice';
+RETURN result_str ;
+END GSR_UNITS_TO_WORDS
+]]></body>
+    </function>
+  </database>

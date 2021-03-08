@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION GSR_AMOUNT_TO_WORDS">
+    <function name="GSR_AMOUNT_TO_WORDS" type="VARCHAR">
+      <parameter name="p_numericvalue" type="NUMERIC" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[amount ALIAS FOR $1;
+amount_str character varying;
+tri NUMBER;
+bi NUMBER;
+mi NUMBER;
+th NUMBER;
+hu NUMBER;
+de NUMBER;
+ten NUMBER;
+return_str character varying(255);
+  BEGIN
+  
+amount_str = to_char(amount, '000000000000D00');
+tri = substr(amount_str, 0, 4)::int4;
+bi = substr(amount_str, 4, 3)::int4;
+mi = substr(amount_str, 7, 2)::int4;
+th = substr(amount_str, 9, 2)::int4;
+hu = substr(amount_str, 11, 1)::int4;
+ten = substr(amount_str, 12, 2)::int4;
+de = substr(amount_str, 15, 2)::int4;
+if tri > 0 then
+return_str = gsr_units_to_words(tri) || 'TRILLION ';
+else
+return_str = '';
+END IF;
+if bi > 0 then
+return_str = return_str || gsr_units_to_words(bi) || 'CRORE ';
+END IF;
+if mi > 0 then
+return_str = return_str || gsr_units_to_words(mi) || 'LAKHS ';
+END IF;
+if th > 0 then
+return_str = return_str || gsr_units_to_words(th) || 'THOUSAND ';
+END IF;
+if hu > 0 then
+return_str = return_str || gsr_units_to_words(hu) || 'HUNDRED ';
+END IF;
+if ten > 0 then
+return_str = return_str || gsr_units_to_words(ten);
+END IF;
+IF return_str != '' then
+return_str = return_str ||'RUPEES ';
+else
+return_str = 'ZERO RUPEES ';
+END IF;
+
+if de > 0 then
+return_str = return_str || 'AND ';
+return_str = return_str || gsr_units_to_words(de);
+return_str = return_str || 'PAISE ONLY ';
+
+ELSE 
+return_str = return_str || 'ONLY ';
+
+END IF;
+    RETURN return_str;
+END GSR_AMOUNT_TO_WORDS
+]]></body>
+    </function>
+  </database>
